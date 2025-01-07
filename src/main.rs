@@ -48,4 +48,8 @@ fn main() {
     };
 
     let counter = count_chars(file);
+
+    for (key, value) in counter.into_iter() {
+        println!("{} -> {}", key, value);
+    }
 }
