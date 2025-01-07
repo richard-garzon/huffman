@@ -26,7 +26,10 @@ fn count_chars(file: File) -> HashMap<char, usize> {
         let chunk = &buffer[..bytes_read];
         for &byte in chunk {
             if let Some(ch) = char::from_u32(byte as u32) {
-                counter.entry(ch).and_modify(|count| *count += 1).or_insert(1);
+                counter
+                    .entry(ch)
+                    .and_modify(|count| *count += 1)
+                    .or_insert(1);
             }
         }
     }
@@ -38,10 +41,8 @@ fn main() {
     let cli = Cli::parse();
 
     let file = match cli.file_name {
-        Some(file_name) => {
-            File::open(&file_name)
-                .unwrap_or_else(|_| panic!("Failed while opening file {}", &file_name))
-        }
+        Some(file_name) => File::open(&file_name)
+            .unwrap_or_else(|_| panic!("Failed while opening file {}", &file_name)),
         None => {
             panic!("Must pass valid file path to huff")
         }
