@@ -50,4 +50,22 @@ mod tests {
 
         assert!(freq.counter.is_empty());
     }
+
+    // Figure this out later, will have to chunk input
+    // and track incomplete unicode bytes
+    #[ignore]
+    #[test]
+    fn test_unicode_string() {
+        let mut freq = Freq::new();
+        let test_input = "привет".as_bytes();
+
+        freq.update(test_input);
+
+        assert_eq!(freq.counter.get(&'п').unwrap(), &1);
+        assert_eq!(freq.counter.get(&'р').unwrap(), &1);
+        assert_eq!(freq.counter.get(&'и').unwrap(), &1);
+        assert_eq!(freq.counter.get(&'в').unwrap(), &1);
+        assert_eq!(freq.counter.get(&'е').unwrap(), &1);
+        assert_eq!(freq.counter.get(&'т').unwrap(), &1);
+    }
 }
