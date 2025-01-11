@@ -16,43 +16,9 @@ struct Cli {
     file_name: Option<String>,
 }
 
-fn count_chars(file: File) -> HashMap<char, usize> {
-    let mut counter: HashMap<char, usize> = HashMap::new();
-
-    let mut reader = BufReader::new(file);
-    let mut buffer = [0; 1024];
-
-    while let Ok(bytes_read) = reader.read(&mut buffer) {
-        if bytes_read == 0 {
-            break;
-        }
-
-        let (valid, incomplete) = match std::str::from_utf8(&buffer) {
-            Ok(valid_str) => (valid_str, &[] as &[u8]),
-            Err(e) => {
-                let valid_up_to = e.valid_up_to();
-                let valid = &buffer[..valid_up_to];
-                let incomplete = &buffer[valid_up_to..];
-                (std::str::from_utf8(valid).unwrap(), incomplete)
-            }
-        };
-
-        let chunk = &buffer[..bytes_read];
-        for &byte in chunk {
-            if let Some(ch) = char::from_u32(byte as u32) {
-                counter
-                    .entry(ch)
-                    .and_modify(|count| *count += 1)
-                    .or_insert(1);
-            }
-        }
-    }
-
-    return counter;
-}
-
 fn main() {
     let cli = Cli::parse();
+    let mut freq = Freq::new();
 
     let file = match cli.file_name {
         Some(file_name) => File::open(&file_name)
@@ -62,9 +28,9 @@ fn main() {
         }
     };
 
-    let counter = count_chars(file);
+    freq.count_chars(file);
 
-    for (key, value) in counter.into_iter() {
+    for (key, value) in freq.counter.into_iter() {
         println!("{} -> {}", key, value);
     }
 }
