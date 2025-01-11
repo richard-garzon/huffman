@@ -27,6 +27,16 @@ fn count_chars(file: File) -> HashMap<char, usize> {
             break;
         }
 
+        let (valid, incomplete) = match std::str::from_utf8(&buffer) {
+            Ok(valid_str) => (valid_str, &[] as &[u8]),
+            Err(e) => {
+                let valid_up_to = e.valid_up_to();
+                let valid = &buffer[..valid_up_to];
+                let incomplete = &buffer[valid_up_to..];
+                (std::str::from_utf8(valid).unwrap(), incomplete)
+            }
+        };
+
         let chunk = &buffer[..bytes_read];
         for &byte in chunk {
             if let Some(ch) = char::from_u32(byte as u32) {
