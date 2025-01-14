@@ -1,10 +1,8 @@
 mod encoding;
 
 use std::fs::File;
-use std::io::{BufReader, Read};
 
 use clap::Parser;
-use std::collections::HashMap;
 
 use encoding::frequency::Freq;
 
