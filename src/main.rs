@@ -5,6 +5,7 @@ use std::fs::File;
 use clap::Parser;
 
 use encoding::frequency::Freq;
+use encoding::tree::HuffNode;
 
 #[derive(Parser)]
 #[command(name = "huff")]
