@@ -115,4 +115,20 @@ mod tests {
         assert_eq!(min_heap.pop().unwrap(), Some(&light_node).unwrap());
         assert_eq!(min_heap.pop().unwrap(), Some(&heavy_node).unwrap());
     }
+
+    #[test]
+    fn test_single_node_tree() {
+        let mut freq = Freq::new();
+        let test_input = "aaa".as_bytes();
+
+        freq.update(test_input);
+
+        let root = generate_tree(freq);
+
+        assert_eq!(root.borrow().character.unwrap(), 'a');
+        assert_ne!(root.borrow().character.unwrap(), 'b');
+        assert_eq!(root.borrow().weight, 3);
+        assert_eq!(root.borrow().left, None);
+        assert_eq!(root.borrow().right, None);
+    }
 }
