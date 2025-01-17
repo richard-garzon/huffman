@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use super::frequency::Freq;
 
-pub fn generate_tree(freq: Freq) -> Rc<RefCell<HuffNode>> {
+pub fn generate_tree(freq: Freq) -> Rc<RefCell<HuffNode>> { // TODO: i think i can change this to Option<Box<>> instead of Rc<RefCell<>>.
     let mut min_heap = BinaryHeap::new();
 
     for (character, weight) in freq.counter.into_iter() {
@@ -48,10 +48,10 @@ pub struct HuffmanTree {
 */
 
 impl HuffNode {
-    pub fn new(character: Option<char>, weight: u32) -> HuffNode {
-        HuffNode {
-            character: character,
-            weight: weight,
+    pub fn new(character: Option<char>, weight: u32) -> Self {
+        Self {
+            character,
+            weight,
             left: None,
             right: None,
             parent: None,
