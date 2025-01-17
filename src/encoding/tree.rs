@@ -3,6 +3,34 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::rc::Rc;
 
+use super::frequency::Freq;
+
+pub fn generate_tree(freq: Freq) -> Rc<RefCell<HuffNode>> {
+    let mut min_heap = BinaryHeap::new();
+
+    for (character, weight) in freq.counter.into_iter() {
+        let curr_node = Rc::new(RefCell::new(HuffNode::new(Some(character), weight)));
+        min_heap.push(curr_node);
+    }
+
+    while min_heap.len() > 1 {
+        let first = min_heap.pop().unwrap();
+        let second = min_heap.pop().unwrap();
+
+        let new_node = Rc::new(RefCell::new(HuffNode::new(
+            None,
+            first.borrow().weight + second.borrow().weight,
+        )));
+
+        new_node.borrow_mut().left = Some(Rc::clone(&first));
+        new_node.borrow_mut().right = Some(Rc::clone(&second));
+
+        min_heap.push(new_node);
+    }
+
+    min_heap.pop().unwrap()
+}
+
 #[derive(Debug)]
 pub struct HuffNode {
     character: Option<char>,
@@ -20,9 +48,9 @@ pub struct HuffmanTree {
 */
 
 impl HuffNode {
-    pub fn new(character: char, weight: u32) -> HuffNode {
+    pub fn new(character: Option<char>, weight: u32) -> HuffNode {
         HuffNode {
-            character: Some(character),
+            character: character,
             weight: weight,
             left: None,
             right: None,
@@ -59,7 +87,7 @@ mod tests {
     fn test_create_node() {
         let test_char = 'a';
         let test_weight = 400;
-        let new_node = HuffNode::new(test_char, test_weight);
+        let new_node = HuffNode::new(Some(test_char), test_weight);
 
         assert_eq!(new_node.character.unwrap(), test_char);
         assert_eq!(new_node.weight, test_weight);
@@ -67,8 +95,8 @@ mod tests {
 
     #[test]
     fn test_huffnode_ordering() {
-        let heavy_node = HuffNode::new('a', 100);
-        let light_node = HuffNode::new('b', 50);
+        let heavy_node = HuffNode::new(Some('a'), 100);
+        let light_node = HuffNode::new(Some('b'), 50);
 
         // Reversed so that BinaryHeap is a min-heap
         assert!(light_node > heavy_node);
@@ -77,8 +105,8 @@ mod tests {
     #[test]
     fn test_min_heap() {
         let mut min_heap = BinaryHeap::new();
-        let heavy_node = HuffNode::new('a', 100);
-        let light_node = HuffNode::new('b', 50);
+        let heavy_node = HuffNode::new(Some('a'), 100);
+        let light_node = HuffNode::new(Some('b'), 50);
 
         min_heap.push(&heavy_node);
         min_heap.push(&light_node);

@@ -4,7 +4,7 @@ use std::io::{BufReader, Read};
 use std::collections::HashMap;
 
 pub struct Freq {
-    pub counter: HashMap<char, usize>,
+    pub counter: HashMap<char, u32>,
     pub incomplete: Vec<u8>,
 }
 
