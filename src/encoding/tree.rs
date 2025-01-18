@@ -5,11 +5,13 @@ use std::rc::Rc;
 
 use super::frequency::Freq;
 
-pub fn generate_tree(freq: Freq) -> Rc<RefCell<HuffNode>> { // TODO: i think i can change this to Option<Box<>> instead of Rc<RefCell<>>.
+pub fn generate_tree(freq: Freq) -> Option<Box<HuffNode>> {
+    // TODO: i think i can change this to Option<Box<>> instead of Rc<RefCell<>>.
     let mut min_heap = BinaryHeap::new();
 
     for (character, weight) in freq.counter.into_iter() {
-        let curr_node = Rc::new(RefCell::new(HuffNode::new(Some(character), weight)));
+        let curr_node = Box::new(HuffNode::new(Some(character), weight));
+        // let curr_node = Rc::new(RefCell::new(HuffNode::new(Some(character), weight)));
         min_heap.push(curr_node);
     }
 
@@ -17,27 +19,24 @@ pub fn generate_tree(freq: Freq) -> Rc<RefCell<HuffNode>> { // TODO: i think i c
         let first = min_heap.pop().unwrap();
         let second = min_heap.pop().unwrap();
 
-        let new_node = Rc::new(RefCell::new(HuffNode::new(
-            None,
-            first.borrow().weight + second.borrow().weight,
-        )));
+        let mut new_node = Box::new(HuffNode::new(None, first.weight + second.weight));
 
-        new_node.borrow_mut().left = Some(Rc::clone(&first));
-        new_node.borrow_mut().right = Some(Rc::clone(&second));
+        new_node.left = Some(first);
+        new_node.right = Some(second);
 
         min_heap.push(new_node);
     }
 
-    min_heap.pop().unwrap()
+    min_heap.pop()
 }
 
 #[derive(Debug)]
 pub struct HuffNode {
     character: Option<char>,
     weight: u32,
-    left: Option<Rc<RefCell<HuffNode>>>,
-    right: Option<Rc<RefCell<HuffNode>>>,
-    parent: Option<Rc<RefCell<HuffNode>>>,
+    left: Option<Box<HuffNode>>,
+    right: Option<Box<HuffNode>>,
+    parent: Option<Box<HuffNode>>,
 }
 
 /* make this cache friendly later
@@ -125,10 +124,24 @@ mod tests {
 
         let root = generate_tree(freq);
 
-        assert_eq!(root.borrow().character.unwrap(), 'a');
-        assert_ne!(root.borrow().character.unwrap(), 'b');
-        assert_eq!(root.borrow().weight, 3);
-        assert_eq!(root.borrow().left, None);
-        assert_eq!(root.borrow().right, None);
+        assert_eq!(root.as_ref().unwrap().character.unwrap(), 'a');
+        assert_ne!(root.as_ref().unwrap().character.unwrap(), 'b');
+        assert_eq!(root.as_ref().unwrap().weight, 3);
+        assert_eq!(root.as_ref().unwrap().left, None);
+        assert_eq!(root.as_ref().unwrap().right, None);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_three_node_tree() {
+        let mut freq = Freq::new();
+        let test_input = "aaaabbc".as_bytes();
+
+        freq.update(test_input);
+
+        let root = generate_tree(freq);
+
+        assert_eq!(root.as_ref().unwrap().character.unwrap(), 'a');
+        assert_eq!(root.as_ref().unwrap().weight, 3);
     }
 }
