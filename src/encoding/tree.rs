@@ -132,16 +132,36 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
-    fn test_three_node_tree() {
+    fn test_two_node_tree() {
         let mut freq = Freq::new();
-        let test_input = "aaaabbc".as_bytes();
+        let test_input = "acc".as_bytes();
 
         freq.update(test_input);
 
         let root = generate_tree(freq);
 
-        assert_eq!(root.as_ref().unwrap().character.unwrap(), 'a');
         assert_eq!(root.as_ref().unwrap().weight, 3);
+        assert_eq!(
+            root.as_ref()
+                .unwrap()
+                .left
+                .as_ref()
+                .unwrap()
+                .character
+                .unwrap(),
+            'a'
+        );
+        assert_eq!(
+            root.as_ref()
+                .unwrap()
+                .right
+                .as_ref()
+                .unwrap()
+                .character
+                .unwrap(),
+            'c'
+        );
+        assert_eq!(root.as_ref().unwrap().left.as_ref().unwrap().weight, 1);
+        assert_eq!(root.as_ref().unwrap().right.as_ref().unwrap().weight, 2);
     }
 }
