@@ -52,6 +52,13 @@ impl Freq {
             self.update(&buffer);
         }
     }
+
+    pub fn clone(self) -> Freq {
+        Freq {
+            counter: self.counter.clone(),
+            incomplete: self.incomplete.clone(),
+        }
+    }
 }
 
 #[cfg(test)]

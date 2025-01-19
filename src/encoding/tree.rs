@@ -1,16 +1,12 @@
-use std::cell::RefCell;
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
-use std::rc::Rc;
-
 use super::frequency::Freq;
+use std::collections::BinaryHeap;
 
-pub fn generate_tree(freq: Freq) -> Option<Box<HuffNode>> {
+pub fn generate_tree(freq: &Freq) -> Option<Box<HuffNode>> {
     // TODO: i think i can change this to Option<Box<>> instead of Rc<RefCell<>>.
     let mut min_heap = BinaryHeap::new();
 
-    for (character, weight) in freq.counter.into_iter() {
-        let curr_node = Box::new(HuffNode::new(Some(character), weight));
+    for (character, weight) in freq.counter.iter() {
+        let curr_node = Box::new(HuffNode::new(Some(*character), *weight));
         // let curr_node = Rc::new(RefCell::new(HuffNode::new(Some(character), weight)));
         min_heap.push(curr_node);
     }
@@ -58,6 +54,8 @@ impl HuffNode {
     }
 }
 
+// Implementing these traits so that nodes in min-heap
+// order as they are added to the BinaryHeap
 impl PartialEq for HuffNode {
     fn eq(&self, other: &Self) -> bool {
         self.weight == other.weight
@@ -80,6 +78,8 @@ impl Ord for HuffNode {
 
 #[cfg(test)]
 mod tests {
+    use std::char;
+
     use super::*;
 
     #[test]
@@ -122,7 +122,7 @@ mod tests {
 
         freq.update(test_input);
 
-        let root = generate_tree(freq);
+        let root = generate_tree(&freq);
 
         assert_eq!(root.as_ref().unwrap().character.unwrap(), 'a');
         assert_ne!(root.as_ref().unwrap().character.unwrap(), 'b');
@@ -138,7 +138,7 @@ mod tests {
 
         freq.update(test_input);
 
-        let root = generate_tree(freq);
+        let root = generate_tree(&freq);
 
         assert_eq!(root.as_ref().unwrap().weight, 3);
         assert_eq!(
@@ -163,5 +163,37 @@ mod tests {
         );
         assert_eq!(root.as_ref().unwrap().left.as_ref().unwrap().weight, 1);
         assert_eq!(root.as_ref().unwrap().right.as_ref().unwrap().weight, 2);
+    }
+
+    fn verify_tree(node: &Option<Box<HuffNode>>, freq: &Freq) {
+        let curr_node = node.as_ref().unwrap();
+        println!("printing node:");
+        println!("{:?}", curr_node);
+        if let Some(character) = curr_node.character {
+            assert_eq!(freq.counter.get(&character).unwrap(), &curr_node.weight)
+        } else {
+            let left = curr_node.left.as_ref().unwrap();
+            let right = curr_node.right.as_ref().unwrap();
+
+            let left_weight = left.weight;
+            let right_weight = right.weight;
+
+            assert_eq!(curr_node.weight, left_weight + right_weight);
+
+            verify_tree(&curr_node.left, &freq);
+            verify_tree(&curr_node.right, &freq);
+        }
+    }
+
+    #[test]
+    fn test_three_node_tree() {
+        let mut freq = Freq::new();
+        let test_input = "aaabbcd".as_bytes();
+
+        freq.update(test_input);
+
+        let root = generate_tree(&freq);
+
+        verify_tree(&root, &freq);
     }
 }
