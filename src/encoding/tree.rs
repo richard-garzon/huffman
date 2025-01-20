@@ -28,11 +28,10 @@ pub fn generate_tree(freq: &Freq) -> Option<Box<HuffNode>> {
 
 #[derive(Debug)]
 pub struct HuffNode {
-    character: Option<char>,
-    weight: u32,
-    left: Option<Box<HuffNode>>,
-    right: Option<Box<HuffNode>>,
-    parent: Option<Box<HuffNode>>,
+    pub character: Option<char>,
+    pub weight: u32,
+    pub left: Option<Box<HuffNode>>,
+    pub right: Option<Box<HuffNode>>,
 }
 
 /* make this cache friendly later
@@ -49,7 +48,6 @@ impl HuffNode {
             weight,
             left: None,
             right: None,
-            parent: None,
         }
     }
 }
@@ -78,8 +76,6 @@ impl Ord for HuffNode {
 
 #[cfg(test)]
 mod tests {
-    use std::char;
-
     use super::*;
 
     #[test]

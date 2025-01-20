@@ -4,6 +4,7 @@ use std::fs::File;
 
 use clap::Parser;
 
+use encoding::encoding::generate_prefix_table;
 use encoding::frequency::Freq;
 use encoding::tree::HuffNode;
 
