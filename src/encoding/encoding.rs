@@ -59,9 +59,22 @@ fn test_two_letter_prefix_table() {
 
     assert_eq!(prefix_table.get(&'a').unwrap(), &1);
     assert_eq!(prefix_table.get(&'b').unwrap(), &0);
+}
+
+#[test]
+fn test_three_letter_prefix_table() {
+    let mut freq = Freq::new();
+    let test_input = "aaabcccc".as_bytes();
+    freq.update(test_input);
+    let root = generate_tree(&freq);
+
+    let prefix_table = generate_prefix_table(root);
     /*
     for (key, value) in prefix_table.into_iter() {
         println!("{} -> {}", key, value);
     }
     */
+    assert_eq!(prefix_table.get(&'a').unwrap(), &3);
+    assert_eq!(prefix_table.get(&'b').unwrap(), &2);
+    assert_eq!(prefix_table.get(&'c').unwrap(), &0);
 }
