@@ -1,8 +1,10 @@
 use super::{
+    bitstuff::BitWriter,
     frequency::Freq,
     tree::{generate_tree, HuffNode},
 };
-use std::collections::HashMap;
+use std::io::Result;
+use std::{collections::HashMap, fs::File};
 
 pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashMap<char, u8>) {
     if node.is_none() {
@@ -31,6 +33,34 @@ pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, u8> {
     get_prefixes(&node, &state, &mut prefix_table);
 
     prefix_table
+}
+
+pub fn generate_header(node: &Option<Box<HuffNode>>, bw: &mut BitWriter) {
+    if node.is_none() {
+        bw.write_bit(0);
+        return;
+    }
+
+    let curr_node = node.as_ref().unwrap();
+
+    match curr_node.character {
+        Some(character) => {
+            let bits = character as u32;
+            bw.write_bit(1);
+            bw.write_bits(bits, 32);
+        }
+
+        None => {
+            bw.write_bit(0);
+        }
+    }
+
+    generate_header(&curr_node.left, bw);
+    generate_header(&curr_node.right, bw);
+}
+
+pub fn encode_data(compressed_file: File) -> Result<()> {
+    Ok(())
 }
 
 #[test]

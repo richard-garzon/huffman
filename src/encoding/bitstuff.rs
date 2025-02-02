@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-struct BitWriter {
+pub struct BitWriter {
     buf: Vec<u8>,
     current_byte: u8,
     bit_position: u8,
@@ -15,7 +15,7 @@ impl BitWriter {
         }
     }
 
-    fn write_bit(&mut self, bit: u8) {
+    pub fn write_bit(&mut self, bit: u8) {
         if bit > 1 {
             panic!("Invalid bit val");
         }
@@ -30,7 +30,7 @@ impl BitWriter {
         }
     }
 
-    fn write_bits(&mut self, bits: u64, num_bits: u8) {
+    pub fn write_bits(&mut self, bits: u32, num_bits: u8) {
         for i in (0..num_bits).rev() {
             let bit = ((bits >> i) & 1) as u8;
             self.write_bit(bit);
@@ -46,7 +46,7 @@ impl BitWriter {
         }
     }
 
-    fn get_vec(mut self) -> io::Result<Vec<u8>> {
+    pub fn get_vec(mut self) -> io::Result<Vec<u8>> {
         self.flush();
         Ok(self.buf)
     }

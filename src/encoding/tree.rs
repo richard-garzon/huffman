@@ -2,7 +2,6 @@ use super::frequency::Freq;
 use std::collections::BinaryHeap;
 
 pub fn generate_tree(freq: &Freq) -> Option<Box<HuffNode>> {
-    // TODO: i think i can change this to Option<Box<>> instead of Rc<RefCell<>>.
     let mut min_heap = BinaryHeap::new();
 
     for (character, weight) in freq.counter.iter() {
