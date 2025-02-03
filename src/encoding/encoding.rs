@@ -1,6 +1,6 @@
 use super::{
     bitstuff::BitWriter,
-    frequency::Freq,
+    frequency::{self, Freq},
     tree::{generate_tree, HuffNode},
 };
 use std::io::Result;
@@ -37,7 +37,6 @@ pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, u8> {
 
 pub fn generate_header(node: &Option<Box<HuffNode>>, bw: &mut BitWriter) {
     if node.is_none() {
-        bw.write_bit(0);
         return;
     }
 
@@ -63,48 +62,82 @@ pub fn encode_data(compressed_file: File) -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_single_letter_prefix_table() {
-    let mut freq = Freq::new();
-    let test_input = "aaa".as_bytes();
-    freq.update(test_input);
-    let root = generate_tree(&freq);
+#[cfg(test)]
+mod tests {
+    use crate::encoding::tree::verify_tree;
 
-    let prefix_table = generate_prefix_table(root);
+    use super::*;
 
-    assert_eq!(prefix_table.get(&'a').unwrap(), &0);
-    for (key, value) in prefix_table.into_iter() {
-        println!("{} -> {}", key, value);
+    #[test]
+    fn test_single_letter_prefix_table() {
+        let mut freq = Freq::new();
+        let test_input = "aaa".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+
+        let prefix_table = generate_prefix_table(root);
+
+        assert_eq!(prefix_table.get(&'a').unwrap(), &0);
+        for (key, value) in prefix_table.into_iter() {
+            println!("{} -> {}", key, value);
+        }
     }
-}
 
-#[test]
-fn test_two_letter_prefix_table() {
-    let mut freq = Freq::new();
-    let test_input = "aaab".as_bytes();
-    freq.update(test_input);
-    let root = generate_tree(&freq);
+    #[test]
+    fn test_two_letter_prefix_table() {
+        let mut freq = Freq::new();
+        let test_input = "aaab".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
 
-    let prefix_table = generate_prefix_table(root);
+        let prefix_table = generate_prefix_table(root);
 
-    assert_eq!(prefix_table.get(&'a').unwrap(), &1);
-    assert_eq!(prefix_table.get(&'b').unwrap(), &0);
-}
-
-#[test]
-fn test_three_letter_prefix_table() {
-    let mut freq = Freq::new();
-    let test_input = "aaabcccc".as_bytes();
-    freq.update(test_input);
-    let root = generate_tree(&freq);
-
-    let prefix_table = generate_prefix_table(root);
-    /*
-    for (key, value) in prefix_table.into_iter() {
-        println!("{} -> {}", key, value);
+        assert_eq!(prefix_table.get(&'a').unwrap(), &1);
+        assert_eq!(prefix_table.get(&'b').unwrap(), &0);
     }
-    */
-    assert_eq!(prefix_table.get(&'a').unwrap(), &3);
-    assert_eq!(prefix_table.get(&'b').unwrap(), &2);
-    assert_eq!(prefix_table.get(&'c').unwrap(), &0);
+
+    #[test]
+    fn test_three_letter_prefix_table() {
+        let mut freq = Freq::new();
+        let test_input = "aaabcccc".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+
+        let prefix_table = generate_prefix_table(root);
+        /*
+        for (key, value) in prefix_table.into_iter() {
+            println!("{} -> {}", key, value);
+        }
+        */
+        assert_eq!(prefix_table.get(&'a').unwrap(), &3);
+        assert_eq!(prefix_table.get(&'b').unwrap(), &2);
+        assert_eq!(prefix_table.get(&'c').unwrap(), &0);
+    }
+
+    fn _print_as_bytes(byte_vec: Vec<u8>) {
+        for byte in byte_vec {
+            println!("{:08b}", byte);
+        }
+    }
+
+    #[test]
+    fn test_header_generation_one_node() {
+        let mut freq = Freq::new();
+        let test_input = "aaa".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let mut bw = BitWriter::new();
+        let expected = vec![
+            0b10000000, // first bit is 1, for the one node, his is followed
+            0b00000000, // by the bit representation of 'a' as a u32, since
+            0b00000000, // char in Rust is 4 bytes. then we have the two trailing
+            0b00110000, // 0s and padding in the fifth & last byte
+            0b10000000,
+        ];
+
+        generate_header(&root, &mut bw);
+        let result = bw.get_vec().ok().unwrap();
+
+        assert_eq!(result, expected);
+    }
 }

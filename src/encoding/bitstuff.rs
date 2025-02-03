@@ -7,7 +7,7 @@ pub struct BitWriter {
 }
 
 impl BitWriter {
-    fn new() -> Self {
+    pub fn new() -> Self {
         BitWriter {
             buf: Vec::new(),
             current_byte: 0,
