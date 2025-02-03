@@ -64,8 +64,6 @@ pub fn encode_data(compressed_file: File) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::tree::verify_tree;
-
     use super::*;
 
     #[test]
@@ -128,7 +126,7 @@ mod tests {
         let root = generate_tree(&freq);
         let mut bw = BitWriter::new();
         let expected = vec![
-            0b10000000, // first bit is 1, for the one node, his is followed
+            0b10000000, // first bit is 1, for the one node, this is followed
             0b00000000, // by the bit representation of 'a' as a u32, since
             0b00000000, // char in Rust is 4 bytes. then we have the two trailing
             0b00110000, // 0s and padding in the fifth & last byte
