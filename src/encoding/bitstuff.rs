@@ -52,11 +52,37 @@ impl BitWriter {
     }
 }
 
-#[test]
-fn test_write_a_bit() {
-    let mut bw = BitWriter::new();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    bw.write_bit(1);
+    #[test]
+    fn test_write_a_bit() {
+        let mut bw = BitWriter::new();
 
-    assert_eq!(bw.get_vec().unwrap(), vec![128]);
+        bw.write_bit(1);
+
+        assert_eq!(bw.get_vec().unwrap(), vec![128]);
+    }
+
+    #[test]
+    fn test_write_bits() {
+        let mut bw = BitWriter::new();
+
+        bw.write_bit(0);
+        bw.write_bit(1);
+
+        assert_eq!(bw.get_vec().unwrap(), vec![64]);
+    }
+
+    #[test]
+    fn test_flush() {
+        let mut bw = BitWriter::new();
+
+        bw.write_bit(0);
+        bw.flush();
+        bw.write_bit(1);
+
+        assert_eq!(bw.get_vec().unwrap(), vec![0, 128]);
+    }
 }
