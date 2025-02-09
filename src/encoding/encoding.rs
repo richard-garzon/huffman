@@ -159,4 +159,21 @@ mod tests {
 
         assert_eq!(result, expected);
     }
+
+    fn test_header_generation_three_nodes() {
+        let mut freq = Freq::new();
+        let test_input = "abbccccc".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let mut bw = BitWriter::new();
+        let expected = vec![
+            0b00100000, 0b00000000, 0b00000000, 0b00001100, 0b00110000, 0b00000000, 0b00000000,
+            0b00000110, 0b00101000, 0b00000000, 0b00000000, 0b00000011, 0b00011000,
+        ];
+
+        generate_header(&root, &mut bw);
+        let result = bw.get_vec().ok().unwrap();
+
+        assert_eq!(result, expected);
+    }
 }
