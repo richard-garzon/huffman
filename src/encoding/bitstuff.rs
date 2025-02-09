@@ -69,10 +69,9 @@ mod tests {
     fn test_write_bits() {
         let mut bw = BitWriter::new();
 
-        bw.write_bit(0);
-        bw.write_bit(1);
+        bw.write_bits(0xDEADBEEF, 32);
 
-        assert_eq!(bw.get_vec().unwrap(), vec![64]);
+        assert_eq!(bw.get_vec().unwrap(), vec![0xDE, 0xAD, 0xBE, 0xEF]);
     }
 
     #[test]

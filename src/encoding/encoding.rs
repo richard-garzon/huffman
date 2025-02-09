@@ -64,6 +64,8 @@ pub fn encode_data(compressed_file: File) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use crate::encoding::tree::verify_tree;
+
     use super::*;
 
     #[test]
@@ -112,6 +114,7 @@ mod tests {
         assert_eq!(prefix_table.get(&'c').unwrap(), &0);
     }
 
+    // Lil utility function for printing u8 as bits
     fn _print_as_bytes(byte_vec: Vec<u8>) {
         for byte in byte_vec {
             println!("{:08b}", byte);
@@ -131,6 +134,24 @@ mod tests {
             0b00000000, // char in Rust is 4 bytes. then we have the two trailing
             0b00110000, // 0s and padding in the fifth & last byte
             0b10000000,
+        ];
+
+        generate_header(&root, &mut bw);
+        let result = bw.get_vec().ok().unwrap();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_header_generation_two_nodes() {
+        let mut freq = Freq::new();
+        let test_input = "aab".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let mut bw = BitWriter::new();
+        let expected = vec![
+            0b01000000, 0b00000000, 0b00000000, 0b00011000, 0b10100000, 0b00000000, 0b00000000,
+            0b00001100, 0b00100000,
         ];
 
         generate_header(&root, &mut bw);
