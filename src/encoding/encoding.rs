@@ -160,6 +160,7 @@ mod tests {
         assert_eq!(result, expected);
     }
 
+    #[test]
     fn test_header_generation_three_nodes() {
         let mut freq = Freq::new();
         let test_input = "abbccccc".as_bytes();
