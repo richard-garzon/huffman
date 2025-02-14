@@ -3,7 +3,7 @@ use super::{
     frequency::{self, Freq},
     tree::{generate_tree, HuffNode},
 };
-use std::io::Result;
+use std::io::{Result, Write};
 use std::{collections::HashMap, fs::File};
 
 pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashMap<char, u8>) {
@@ -56,6 +56,32 @@ pub fn generate_header(node: &Option<Box<HuffNode>>, bw: &mut BitWriter) {
 
     generate_header(&curr_node.left, bw);
     generate_header(&curr_node.right, bw);
+}
+
+pub fn write_header_with_size(node:&Option<Box<HuffNode>>, file: &mut File) -> Result<()> {
+    let mut bw = BitWriter::new();
+    generate_header(&node, &mut bw);
+
+    let header_size = bw.get_vec().unwrap().len();
+
+    match size_of::<usize>() {
+        4 => {
+            let u32_val = header_size as u32;
+            file.write_all(&u32_val.to_be_bytes())?;
+        }
+        8 => {
+            let u64_val = header_size as u64;
+            file.write_all(&u64_val.to_be_bytes())?;
+        } 
+        _ => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "Unsupported usize size",
+            )); 
+        }
+    }
+
+    Ok(())
 }
 
 pub fn encode_data(compressed_file: File) -> Result<()> {
