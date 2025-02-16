@@ -3,7 +3,7 @@ use super::{
     frequency::{self, Freq},
     tree::{generate_tree, HuffNode},
 };
-use std::io::{Result, Write};
+use std::io::{BufReader, Result, Write};
 use std::{collections::HashMap, fs::File};
 
 pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashMap<char, u8>) {
@@ -70,8 +70,21 @@ pub fn write_header_with_size_to_output_bw(node: &Option<Box<HuffNode>>, file_bw
     }
 }
 
-pub fn encode_data(compressed_file: File) -> Result<()> {
-    Ok(())
+pub fn get_encoded_data_with_header(file: File, node: Option<Box<HuffNode>>) -> Vec<u8> {
+    let prefix_table = generate_prefix_table(node);
+    let mut bw = BitWriter::new();
+
+    let mut reader = BufReader::new(file);
+    let mut buffer = [0; 1024];
+
+    // we're gonna need to read in some data from the file handle
+    // then we iterate thru it, one prefix at a time. therefore, one bit at a time.
+    // we will need to save "incomplete" bits at the end of a buffer that are
+    // prefixes split across buffered reads from the file
+    // once the file is encoded in memory, find the size
+    // and write the 4 byte header
+
+    vec![]
 }
 
 #[cfg(test)]
