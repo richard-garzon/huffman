@@ -58,30 +58,16 @@ pub fn generate_header(node: &Option<Box<HuffNode>>, bw: &mut BitWriter) {
     generate_header(&curr_node.right, bw);
 }
 
-pub fn write_header_with_size(node:&Option<Box<HuffNode>>, file: &mut File) -> Result<()> {
+pub fn write_header_with_size_to_output_bw(node: &Option<Box<HuffNode>>, file_bw: &mut BitWriter) {
     let mut bw = BitWriter::new();
     generate_header(&node, &mut bw);
+    let header = bw.get_vec().unwrap();
+    let header_size = header.len() as u32;
 
-    let header_size = bw.get_vec().unwrap().len();
-
-    match size_of::<usize>() {
-        4 => {
-            let u32_val = header_size as u32;
-            file.write_all(&u32_val.to_be_bytes())?;
-        }
-        8 => {
-            let u64_val = header_size as u64;
-            file.write_all(&u64_val.to_be_bytes())?;
-        } 
-        _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
-                "Unsupported usize size",
-            )); 
-        }
+    file_bw.write_bits(header_size, 32);
+    for byte in header {
+        file_bw.write_bits(byte as u32, 8);
     }
-
-    Ok(())
 }
 
 pub fn encode_data(compressed_file: File) -> Result<()> {
@@ -200,6 +186,25 @@ mod tests {
 
         generate_header(&root, &mut bw);
         let result = bw.get_vec().ok().unwrap();
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_write_header_with_size_to_output_bw() {
+        let mut bw = BitWriter::new();
+        let mut freq = Freq::new();
+        let test_input = "aaa".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let expected = vec![
+            0b00000000, 0b00000000, 0b00000000, 0b00000101, 0b10000000, 0b00000000, 0b00000000,
+            0b00110000, 0b10000000,
+        ];
+
+        write_header_with_size_to_output_bw(&root, &mut bw);
+
+        let mut result = bw.get_vec().ok().unwrap();
 
         assert_eq!(result, expected);
     }
