@@ -70,7 +70,7 @@ pub fn write_header_with_size_to_output_bw(node: &Option<Box<HuffNode>>, file_bw
     }
 }
 
-pub fn get_encoded_data_with_header(file: File, node: Option<Box<HuffNode>>) -> Vec<u8> {
+pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, u8>) -> Vec<u8> {
     let prefix_table = generate_prefix_table(node);
     let mut bw = BitWriter::new();
 
@@ -78,11 +78,10 @@ pub fn get_encoded_data_with_header(file: File, node: Option<Box<HuffNode>>) -> 
     let mut buffer = [0; 1024];
 
     // we're gonna need to read in some data from the file handle
-    // then we iterate thru it, one prefix at a time. therefore, one bit at a time.
-    // we will need to save "incomplete" bits at the end of a buffer that are
-    // prefixes split across buffered reads from the file
-    // once the file is encoded in memory, find the size
-    // and write the 4 byte header
+    // then we iterate thru it by character and get get its u8 prefix
+    // then we write the meaningful bits to the bitwriter
+    // then we get the size and write that to a header and return that all as
+    // a vec of u8
 
     vec![]
 }
