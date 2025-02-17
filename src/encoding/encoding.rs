@@ -3,7 +3,7 @@ use super::{
     frequency::{self, Freq},
     tree::{generate_tree, HuffNode},
 };
-use std::io::{BufReader, Result, Write};
+use std::io::{BufReader, Read, Result};
 use std::{collections::HashMap, fs::File};
 
 pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashMap<char, u8>) {
@@ -71,11 +71,37 @@ pub fn write_header_with_size_to_output_bw(node: &Option<Box<HuffNode>>, file_bw
 }
 
 pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, u8>) -> Vec<u8> {
-    let prefix_table = generate_prefix_table(node);
     let mut bw = BitWriter::new();
+    let mut data = vec![];
+    let mut incomplete = vec![];
 
     let mut reader = BufReader::new(file);
     let mut buffer = [0; 1024];
+
+    while let Ok(bytes_read) = reader.read(&mut buffer) {
+        if bytes_read == 0 {
+            break;
+        }
+
+        data = incomplete.clone();
+        data.extend_from_slice(&buffer);
+
+        let (valid, incomplete) = match std::str::from_utf8(&data) {
+            Ok(valid_str) => (valid_str, &[] as &[u8]),
+            Err(e) => {
+                let valid_up_to = e.valid_up_to();
+                (
+                    std::str::from_utf8(&data[..valid_up_to]).unwrap(),
+                    &data[valid_up_to..],
+                )
+            }
+        };
+
+        for ch in valid.chars() {
+            let curr_prefix = prefix_table.get(&ch).unwrap().clone() as u32;
+            bw.write_bits(curr_prefix, 8);
+        }
+    }
 
     // we're gonna need to read in some data from the file handle
     // then we iterate thru it by character and get get its u8 prefix
@@ -83,7 +109,7 @@ pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, u8>)
     // then we get the size and write that to a header and return that all as
     // a vec of u8
 
-    vec![]
+    return bw.get_vec().unwrap();
 }
 
 #[cfg(test)]
