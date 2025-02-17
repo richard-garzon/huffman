@@ -6,7 +6,19 @@ use super::{
 use std::io::{BufReader, Read, Result};
 use std::{collections::HashMap, fs::File};
 
-pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashMap<char, u8>) {
+fn get_prefix_size(its_a_byte: u8) -> u8 {
+    if its_a_byte == 0 {
+        return 0;
+    }
+
+    return 8 - its_a_byte.leading_zeros() as u8;
+}
+
+pub fn get_prefixes(
+    node: &Option<Box<HuffNode>>,
+    state: &u8,
+    prefix: &mut HashMap<char, (u8, u8)>,
+) {
     if node.is_none() {
         return;
     }
@@ -14,7 +26,8 @@ pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashM
     let curr_node = node.as_ref().unwrap();
 
     if let Some(character) = curr_node.character {
-        prefix.insert(character, state.clone());
+        let copy_cat = state.clone();
+        prefix.insert(character, (copy_cat, get_prefix_size(copy_cat)));
     } else {
         let mut left_state = state.clone() << 1;
         left_state |= 0;
@@ -26,7 +39,7 @@ pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: &u8, prefix: &mut HashM
     }
 }
 
-pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, u8> {
+pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, (u8, u8)> {
     let mut prefix_table = HashMap::new();
     let mut state: u8 = 0;
 
@@ -58,7 +71,10 @@ pub fn generate_header(node: &Option<Box<HuffNode>>, bw: &mut BitWriter) {
     generate_header(&curr_node.right, bw);
 }
 
-pub fn write_header_with_size_to_output_bw(node: &Option<Box<HuffNode>>, file_bw: &mut BitWriter) {
+pub fn write_tree_header_with_size_to_output_bw(
+    node: &Option<Box<HuffNode>>,
+    file_bw: &mut BitWriter,
+) {
     let mut bw = BitWriter::new();
     generate_header(&node, &mut bw);
     let header = bw.get_vec().unwrap();
@@ -70,7 +86,7 @@ pub fn write_header_with_size_to_output_bw(node: &Option<Box<HuffNode>>, file_bw
     }
 }
 
-pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, u8>) -> Vec<u8> {
+pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, (u8, u8)>) -> Vec<u8> {
     let mut bw = BitWriter::new();
     let mut data = vec![];
     let mut incomplete = vec![];
@@ -98,16 +114,10 @@ pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, u8>)
         };
 
         for ch in valid.chars() {
-            let curr_prefix = prefix_table.get(&ch).unwrap().clone() as u32;
-            bw.write_bits(curr_prefix, 8);
+            let (curr_prefix, meaningful_bits) = prefix_table.get(&ch).unwrap().clone();
+            bw.write_bits(curr_prefix as u32, meaningful_bits);
         }
     }
-
-    // we're gonna need to read in some data from the file handle
-    // then we iterate thru it by character and get get its u8 prefix
-    // then we write the meaningful bits to the bitwriter
-    // then we get the size and write that to a header and return that all as
-    // a vec of u8
 
     return bw.get_vec().unwrap();
 }
@@ -127,10 +137,7 @@ mod tests {
 
         let prefix_table = generate_prefix_table(root);
 
-        assert_eq!(prefix_table.get(&'a').unwrap(), &0);
-        for (key, value) in prefix_table.into_iter() {
-            println!("{} -> {}", key, value);
-        }
+        assert_eq!(prefix_table.get(&'a').unwrap(), &(0, 0));
     }
 
     #[test]
@@ -142,8 +149,8 @@ mod tests {
 
         let prefix_table = generate_prefix_table(root);
 
-        assert_eq!(prefix_table.get(&'a').unwrap(), &1);
-        assert_eq!(prefix_table.get(&'b').unwrap(), &0);
+        assert_eq!(prefix_table.get(&'a').unwrap(), &(1, 1));
+        assert_eq!(prefix_table.get(&'b').unwrap(), &(0, 0));
     }
 
     #[test]
@@ -159,9 +166,9 @@ mod tests {
             println!("{} -> {}", key, value);
         }
         */
-        assert_eq!(prefix_table.get(&'a').unwrap(), &3);
-        assert_eq!(prefix_table.get(&'b').unwrap(), &2);
-        assert_eq!(prefix_table.get(&'c').unwrap(), &0);
+        assert_eq!(prefix_table.get(&'a').unwrap(), &(3, 2));
+        assert_eq!(prefix_table.get(&'b').unwrap(), &(2, 2));
+        assert_eq!(prefix_table.get(&'c').unwrap(), &(0, 0));
     }
 
     // Lil utility function for printing u8 as bits
@@ -240,7 +247,7 @@ mod tests {
             0b00110000, 0b10000000,
         ];
 
-        write_header_with_size_to_output_bw(&root, &mut bw);
+        write_tree_header_with_size_to_output_bw(&root, &mut bw);
 
         let mut result = bw.get_vec().ok().unwrap();
 
@@ -259,7 +266,7 @@ mod tests {
             0b00011000, 0b10100000, 0b00000000, 0b00000000, 0b00001100, 0b00100000,
         ];
 
-        write_header_with_size_to_output_bw(&root, &mut bw);
+        write_tree_header_with_size_to_output_bw(&root, &mut bw);
         let result = bw.get_vec().ok().unwrap();
 
         assert_eq!(result, expected);
@@ -278,7 +285,7 @@ mod tests {
             0b00000000, 0b00000011, 0b00011000,
         ];
 
-        write_header_with_size_to_output_bw(&root, &mut bw);
+        write_tree_header_with_size_to_output_bw(&root, &mut bw);
         let result = bw.get_vec().ok().unwrap();
 
         assert_eq!(result, expected);
