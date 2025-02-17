@@ -86,10 +86,38 @@ pub fn write_tree_header_with_size_to_output_bw(
     }
 }
 
+fn get_encoded_data_with_header_impl(
+    prefix_table: &HashMap<char, (u8, u8)>,
+    bw: &mut BitWriter,
+    incomplete: &mut Vec<u8>,
+    chunk: &[u8],
+) {
+    let mut data = incomplete.clone();
+    data.extend_from_slice(chunk);
+
+    let (valid, curr_incomplete) = match std::str::from_utf8(&data) {
+        Ok(valid_str) => (valid_str, &[] as &[u8]),
+        Err(e) => {
+            let valid_up_to = e.valid_up_to();
+            (
+                std::str::from_utf8(&data[..valid_up_to]).unwrap(),
+                &data[valid_up_to..],
+            )
+        }
+    };
+
+    for ch in valid.chars() {
+        let (curr_prefix, meaningful_bits) = prefix_table.get(&ch).unwrap().clone();
+        bw.write_bits(curr_prefix as u32, meaningful_bits);
+    }
+
+    incomplete.clear();
+    incomplete.extend_from_slice(curr_incomplete);
+}
+
 pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, (u8, u8)>) -> Vec<u8> {
     let mut bw = BitWriter::new();
-    let mut data = vec![];
-    let mut incomplete = vec![];
+    let mut incomplete: Vec<u8> = Vec::new();
 
     let mut reader = BufReader::new(file);
     let mut buffer = [0; 1024];
@@ -99,27 +127,10 @@ pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, (u8,
             break;
         }
 
-        data = incomplete.clone();
-        data.extend_from_slice(&buffer);
-
-        let (valid, incomplete) = match std::str::from_utf8(&data) {
-            Ok(valid_str) => (valid_str, &[] as &[u8]),
-            Err(e) => {
-                let valid_up_to = e.valid_up_to();
-                (
-                    std::str::from_utf8(&data[..valid_up_to]).unwrap(),
-                    &data[valid_up_to..],
-                )
-            }
-        };
-
-        for ch in valid.chars() {
-            let (curr_prefix, meaningful_bits) = prefix_table.get(&ch).unwrap().clone();
-            bw.write_bits(curr_prefix as u32, meaningful_bits);
-        }
+        get_encoded_data_with_header_impl(&prefix_table, &mut bw, &mut incomplete, &buffer);
     }
 
-    return bw.get_vec().unwrap();
+    bw.get_vec().unwrap()
 }
 
 #[cfg(test)]
@@ -292,5 +303,5 @@ mod tests {
     }
 
     #[test]
-    fn test_get_encoded_data_with_header() {}
+    fn test_get_encoded_data_with_header_impl() {}
 }
