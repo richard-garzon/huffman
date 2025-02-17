@@ -236,7 +236,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write_header_with_size_to_output_bw() {
+    fn test_write_tree_header_with_size_to_output_bw() {
         let mut bw = BitWriter::new();
         let mut freq = Freq::new();
         let test_input = "aaa".as_bytes();
@@ -255,7 +255,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write_header_with_size_to_output_bw_two_nodes() {
+    fn test_write_tree_header_with_size_to_output_bw_two_nodes() {
         let mut freq = Freq::new();
         let test_input = "aab".as_bytes();
         freq.update(test_input);
@@ -273,7 +273,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write_header_with_size_to_output_bw_three_nodes() {
+    fn test_write_tree_header_with_size_to_output_bw_three_nodes() {
         let mut freq = Freq::new();
         let test_input = "abbccccc".as_bytes();
         freq.update(test_input);
@@ -290,4 +290,7 @@ mod tests {
 
         assert_eq!(result, expected);
     }
+
+    #[test]
+    fn test_get_encoded_data_with_header() {}
 }
