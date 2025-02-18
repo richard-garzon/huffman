@@ -97,7 +97,7 @@ fn get_encoded_data_with_header_impl(
     };
 
     for ch in valid.chars() {
-        let (curr_prefix, meaningful_bits) = prefix_table.get(&ch).unwrap().clone();
+        let &(curr_prefix, meaningful_bits) = prefix_table.get(&ch).unwrap();
         bw.write_bits(curr_prefix as u32, meaningful_bits);
     }
 
