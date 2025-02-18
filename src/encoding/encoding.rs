@@ -14,28 +14,18 @@ fn get_prefix_size(its_a_byte: u8) -> u8 {
     return 8 - its_a_byte.leading_zeros() as u8;
 }
 
-pub fn get_prefixes(
-    node: &Option<Box<HuffNode>>,
-    state: &u8,
-    prefix: &mut HashMap<char, (u8, u8)>,
-) {
+pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: u8, prefix: &mut HashMap<char, (u8, u8)>) {
     if node.is_none() {
         return;
     }
 
-    let curr_node = node.as_ref().unwrap();
-
-    if let Some(character) = curr_node.character {
-        let copy_cat = state.clone();
-        prefix.insert(character, (copy_cat, get_prefix_size(copy_cat)));
-    } else {
-        let mut left_state = state.clone() << 1;
-        left_state |= 0;
-        get_prefixes(&curr_node.left, &left_state, prefix);
-
-        let mut right_state = state.clone() << 1;
-        right_state |= 1;
-        get_prefixes(&curr_node.right, &right_state, prefix);
+    if let Some(curr_node) = node {
+        if let Some(character) = curr_node.character {
+            prefix.insert(character, (state, get_prefix_size(state)));
+        } else {
+            get_prefixes(&curr_node.left, state << 1, prefix);
+            get_prefixes(&curr_node.right, state << 1 | 1, prefix);
+        }
     }
 }
 
@@ -43,7 +33,7 @@ pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, (u8, 
     let mut prefix_table = HashMap::new();
     let mut state: u8 = 0;
 
-    get_prefixes(&node, &state, &mut prefix_table);
+    get_prefixes(&node, state, &mut prefix_table);
 
     prefix_table
 }
