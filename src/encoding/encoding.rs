@@ -61,19 +61,13 @@ pub fn generate_header(node: &Option<Box<HuffNode>>, bw: &mut BitWriter) {
     generate_header(&curr_node.right, bw);
 }
 
-pub fn write_tree_header_with_size_to_output_bw(
-    node: &Option<Box<HuffNode>>,
-    file_bw: &mut BitWriter,
-) {
+pub fn get_tree_header_with_size(node: &Option<Box<HuffNode>>) -> (u32, Vec<u8>) {
     let mut bw = BitWriter::new();
     generate_header(&node, &mut bw);
     let header = bw.get_vec().unwrap();
     let header_size = header.len() as u32;
 
-    file_bw.write_bits(header_size, 32);
-    for byte in header {
-        file_bw.write_bits(byte as u32, 8);
-    }
+    (header_size, header)
 }
 
 fn get_encoded_data_with_header_impl(
@@ -237,59 +231,55 @@ mod tests {
     }
 
     #[test]
-    fn test_write_tree_header_with_size_to_output_bw() {
+    fn test_get_tree_header_with_size() {
         let mut bw = BitWriter::new();
         let mut freq = Freq::new();
         let test_input = "aaa".as_bytes();
         freq.update(test_input);
         let root = generate_tree(&freq);
-        let expected = vec![
-            0b00000000, 0b00000000, 0b00000000, 0b00000101, 0b10000000, 0b00000000, 0b00000000,
-            0b00110000, 0b10000000,
-        ];
+        let expected_size = 5;
+        let expected = vec![0b10000000, 0b00000000, 0b00000000, 0b00110000, 0b10000000];
 
-        write_tree_header_with_size_to_output_bw(&root, &mut bw);
+        let (header_size, header) = get_tree_header_with_size(&root);
 
-        let mut result = bw.get_vec().ok().unwrap();
-
-        assert_eq!(result, expected);
+        assert_eq!(header_size, expected_size);
+        assert_eq!(header, expected);
     }
 
     #[test]
-    fn test_write_tree_header_with_size_to_output_bw_two_nodes() {
+    fn test_get_tree_header_with_size_two_nodes() {
         let mut freq = Freq::new();
         let test_input = "aab".as_bytes();
         freq.update(test_input);
         let root = generate_tree(&freq);
-        let mut bw = BitWriter::new();
+        let expected_size = 9;
         let expected = vec![
-            0b00000000, 0b00000000, 0b00000000, 0b00001001, 0b01000000, 0b00000000, 0b00000000,
-            0b00011000, 0b10100000, 0b00000000, 0b00000000, 0b00001100, 0b00100000,
+            0b01000000, 0b00000000, 0b00000000, 0b00011000, 0b10100000, 0b00000000, 0b00000000,
+            0b00001100, 0b00100000,
         ];
 
-        write_tree_header_with_size_to_output_bw(&root, &mut bw);
-        let result = bw.get_vec().ok().unwrap();
+        let (header_size, header) = get_tree_header_with_size(&root);
 
-        assert_eq!(result, expected);
+        assert_eq!(header_size, expected_size);
+        assert_eq!(header, expected);
     }
 
     #[test]
-    fn test_write_tree_header_with_size_to_output_bw_three_nodes() {
+    fn test_get_tree_header_with_size_three_nodes() {
         let mut freq = Freq::new();
         let test_input = "abbccccc".as_bytes();
         freq.update(test_input);
         let root = generate_tree(&freq);
-        let mut bw = BitWriter::new();
+        let expected_size = 13;
         let expected = vec![
-            0b00000000, 0b00000000, 0b00000000, 0b00001101, 0b00100000, 0b00000000, 0b00000000,
-            0b00001100, 0b00110000, 0b00000000, 0b00000000, 0b00000110, 0b00101000, 0b00000000,
-            0b00000000, 0b00000011, 0b00011000,
+            0b00100000, 0b00000000, 0b00000000, 0b00001100, 0b00110000, 0b00000000, 0b00000000,
+            0b00000110, 0b00101000, 0b00000000, 0b00000000, 0b00000011, 0b00011000,
         ];
 
-        write_tree_header_with_size_to_output_bw(&root, &mut bw);
-        let result = bw.get_vec().ok().unwrap();
+        let (header_size, header) = get_tree_header_with_size(&root);
 
-        assert_eq!(result, expected);
+        assert_eq!(header, expected);
+        assert_eq!(header_size, expected_size);
     }
 
     #[test]
