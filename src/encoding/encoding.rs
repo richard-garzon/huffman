@@ -99,7 +99,10 @@ fn get_encoded_data_with_header_impl(
     incomplete.extend_from_slice(curr_incomplete);
 }
 
-pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, (u8, u8)>) -> Vec<u8> {
+pub fn get_encoded_data_with_header(
+    file: File,
+    prefix_table: HashMap<char, (u8, u8)>,
+) -> (u32, Vec<u8>) {
     let mut bw = BitWriter::new();
     let mut incomplete: Vec<u8> = Vec::new();
 
@@ -114,13 +117,14 @@ pub fn get_encoded_data_with_header(file: File, prefix_table: HashMap<char, (u8,
         get_encoded_data_with_header_impl(&prefix_table, &mut bw, &mut incomplete, &buffer);
     }
 
-    bw.get_vec().unwrap()
+    let data = bw.get_vec().unwrap();
+    let data_size = data.len() as u32;
+
+    (data_size, data)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::tree::verify_tree;
-
     use super::*;
 
     #[test]
