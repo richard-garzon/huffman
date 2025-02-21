@@ -3,12 +3,12 @@ use super::{
     frequency::{self, Freq},
     tree::{generate_tree, HuffNode},
 };
-use std::io::{BufReader, Read, Result};
+use std::io::{BufReader, Cursor, Read, Result};
 use std::{collections::HashMap, fs::File};
 
 fn get_prefix_size(its_a_byte: u8) -> u8 {
     if its_a_byte == 0 {
-        return 0;
+        return 1;
     }
 
     return 8 - its_a_byte.leading_zeros() as u8;
@@ -29,6 +29,10 @@ pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: u8, prefix: &mut HashMa
     }
 }
 
+/// Generates a prefix table from a Huffman tree
+/// it takes char as a key. the tuple values are (prefix, number of meaningful bits)
+/// the meaningful bits piece is used so we know how many to write while encoding
+/// so we can pack bits tight
 pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, (u8, u8)> {
     let mut prefix_table = HashMap::new();
     let mut state: u8 = 0;
@@ -77,7 +81,7 @@ fn get_encoded_data_with_header_impl(
     chunk: &[u8],
 ) {
     let mut data = incomplete.clone();
-    data.extend_from_slice(chunk);
+    data.extend_from_slice(&chunk);
 
     let (valid, curr_incomplete) = match std::str::from_utf8(&data) {
         Ok(valid_str) => (valid_str, &[] as &[u8]),
@@ -99,8 +103,8 @@ fn get_encoded_data_with_header_impl(
     incomplete.extend_from_slice(curr_incomplete);
 }
 
-pub fn get_encoded_data_with_header(
-    file: File,
+pub fn get_encoded_data_with_header<R: Read>(
+    file: R,
     prefix_table: HashMap<char, (u8, u8)>,
 ) -> (u32, Vec<u8>) {
     let mut bw = BitWriter::new();
@@ -114,7 +118,12 @@ pub fn get_encoded_data_with_header(
             break;
         }
 
-        get_encoded_data_with_header_impl(&prefix_table, &mut bw, &mut incomplete, &buffer);
+        get_encoded_data_with_header_impl(
+            &prefix_table,
+            &mut bw,
+            &mut incomplete,
+            &buffer[..bytes_read],
+        );
     }
 
     let data = bw.get_vec().unwrap();
@@ -136,7 +145,7 @@ mod tests {
 
         let prefix_table = generate_prefix_table(root);
 
-        assert_eq!(prefix_table.get(&'a').unwrap(), &(0, 0));
+        assert_eq!(prefix_table.get(&'a').unwrap(), &(0, 1));
     }
 
     #[test]
@@ -149,7 +158,7 @@ mod tests {
         let prefix_table = generate_prefix_table(root);
 
         assert_eq!(prefix_table.get(&'a').unwrap(), &(1, 1));
-        assert_eq!(prefix_table.get(&'b').unwrap(), &(0, 0));
+        assert_eq!(prefix_table.get(&'b').unwrap(), &(0, 1));
     }
 
     #[test]
@@ -167,7 +176,7 @@ mod tests {
         */
         assert_eq!(prefix_table.get(&'a').unwrap(), &(3, 2));
         assert_eq!(prefix_table.get(&'b').unwrap(), &(2, 2));
-        assert_eq!(prefix_table.get(&'c').unwrap(), &(0, 0));
+        assert_eq!(prefix_table.get(&'c').unwrap(), &(0, 1));
     }
 
     // Lil utility function for printing u8 as bits
@@ -236,7 +245,6 @@ mod tests {
 
     #[test]
     fn test_get_tree_header_with_size() {
-        let mut bw = BitWriter::new();
         let mut freq = Freq::new();
         let test_input = "aaa".as_bytes();
         freq.update(test_input);
@@ -287,5 +295,19 @@ mod tests {
     }
 
     #[test]
-    fn test_get_encoded_data_with_header_impl() {}
+    fn test_get_encoded_data_with_header() {
+        let mut freq = Freq::new();
+        let test_input = "aaa".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.to_vec());
+        let expected_size = 1;
+        let expected = vec![0b00000000];
+
+        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+
+        assert_eq!(data_size, expected_size);
+        assert_eq!(encoded_data, expected);
+    }
 }

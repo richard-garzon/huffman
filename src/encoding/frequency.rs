@@ -49,7 +49,7 @@ impl Freq {
                 break;
             }
 
-            self.update(&buffer);
+            self.update(&buffer[..bytes_read]);
         }
     }
 
