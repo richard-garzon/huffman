@@ -295,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_encoded_data_with_header() {
+    fn test_get_encoded_data_with_header_one_distinct_char() {
         let mut freq = Freq::new();
         let test_input = "aaa".as_bytes();
         freq.update(test_input);
@@ -304,6 +304,40 @@ mod tests {
         let test_file = Cursor::new(test_input.to_vec());
         let expected_size = 1;
         let expected = vec![0b00000000];
+
+        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+
+        assert_eq!(data_size, expected_size);
+        assert_eq!(encoded_data, expected);
+    }
+
+    #[test]
+    fn test_get_encoded_data_with_header_two_distinct_chars() {
+        let mut freq = Freq::new();
+        let test_input = "aab".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.to_vec());
+        let expected_size = 1;
+        let expected = vec![0b11000000];
+
+        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+
+        assert_eq!(data_size, expected_size);
+        assert_eq!(encoded_data, expected);
+    }
+
+    #[test]
+    fn test_get_encoded_data_with_header_three_distinct_chars() {
+        let mut freq = Freq::new();
+        let test_input = "aaabcccc".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.to_vec());
+        let expected_size = 2;
+        let expected = vec![0b11111110, 0b00000000];
 
         let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
 

@@ -62,7 +62,7 @@ mod tests {
 
         bw.write_bit(1);
 
-        assert_eq!(bw.get_vec().unwrap(), vec![0b1000000]);
+        assert_eq!(bw.get_vec().unwrap(), vec![0b10000000]);
     }
 
     #[test]
