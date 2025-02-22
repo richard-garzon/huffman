@@ -50,6 +50,10 @@ impl BitWriter {
         self.flush();
         Ok(self.buf)
     }
+
+    pub fn get_current_pos(&self) -> u8 {
+        self.bit_position
+    }
 }
 
 #[cfg(test)]

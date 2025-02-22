@@ -193,4 +193,18 @@ mod tests {
 
         verify_tree(&root, &freq);
     }
+
+    // running with no capture shows that generate tree isn't determinate!
+    // write a test to lock in an order and fix
+    #[test]
+    fn test_tree_no_duplicate_characters() {
+        let mut freq = Freq::new();
+        let test_input = "abcd".as_bytes();
+
+        freq.update(test_input);
+
+        let root = generate_tree(&freq);
+
+        verify_tree(&root, &freq);
+    }
 }

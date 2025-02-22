@@ -7,6 +7,7 @@ use std::io::{BufReader, Cursor, Read, Result};
 use std::{collections::HashMap, fs::File};
 
 fn get_prefix_size(its_a_byte: u8) -> u8 {
+    // special case for any empty byte.
     if its_a_byte == 0 {
         return 1;
     }
@@ -103,6 +104,7 @@ fn get_encoded_data_with_header_impl(
     incomplete.extend_from_slice(curr_incomplete);
 }
 
+///
 pub fn get_encoded_data_with_header<R: Read>(
     file: R,
     prefix_table: HashMap<char, (u8, u8)>,
@@ -125,6 +127,10 @@ pub fn get_encoded_data_with_header<R: Read>(
             &buffer[..bytes_read],
         );
     }
+
+    let current_bit_pos = &bw.get_current_pos();
+
+    println!("current bit pos: {}", current_bit_pos);
 
     let data = bw.get_vec().unwrap();
     let data_size = data.len() as u32;
@@ -179,6 +185,21 @@ mod tests {
         assert_eq!(prefix_table.get(&'c').unwrap(), &(0, 1));
     }
 
+    // this fails, result prefix table value is indeterminate!
+    #[test]
+    fn test_four_unique_letter_prefix_table() {
+        let mut freq = Freq::new();
+        let test_input = "abcd".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+
+        let prefix_table = generate_prefix_table(root);
+
+        assert_eq!(prefix_table.get(&'a').unwrap(), &(0, 2));
+        assert_eq!(prefix_table.get(&'b').unwrap(), &(1, 2));
+        assert_eq!(prefix_table.get(&'c').unwrap(), &(2, 2));
+        assert_eq!(prefix_table.get(&'d').unwrap(), &(3, 2));
+    }
     // Lil utility function for printing u8 as bits
     fn _print_as_bytes(byte_vec: Vec<u8>) {
         for byte in byte_vec {
@@ -338,6 +359,24 @@ mod tests {
         let test_file = Cursor::new(test_input.to_vec());
         let expected_size = 2;
         let expected = vec![0b11111110, 0b00000000];
+
+        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+
+        assert_eq!(data_size, expected_size);
+        assert_eq!(encoded_data, expected);
+    }
+
+    // this fails, result encoded data is indeterminate!
+    #[test]
+    fn test_get_encoded_data_with_header_no_duplicates() {
+        let mut freq = Freq::new();
+        let test_input = "abcd".as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.to_vec());
+        let expected_size = 1;
+        let expected = vec![0b00011011];
 
         let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
 
