@@ -69,7 +69,20 @@ impl PartialOrd for HuffNode {
 
 impl Ord for HuffNode {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.weight.cmp(&self.weight)
+        let cmp_result = other.weight.cmp(&self.weight);
+
+        if cmp_result != std::cmp::Ordering::Equal {
+            // weights aren't equal, return cmp result to get min-heap by weight behavior
+            return cmp_result;
+        }
+
+        match (self.character, other.character) {
+            // weights are equal, so we order lexicographically by character if possible
+            (Some(c1), Some(c2)) => c2.cmp(&c1), // Returns Less if c2 < c1
+            (Some(_), None) => std::cmp::Ordering::Greater, // Any char value is greater than no char value
+            (None, Some(_)) => std::cmp::Ordering::Less, // None value is Less than some char value
+            (None, None) => std::cmp::Ordering::Equal,
+        }
     }
 }
 
