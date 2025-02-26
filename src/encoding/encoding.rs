@@ -6,26 +6,27 @@ use super::{
 use std::io::{BufReader, Cursor, Read, Result};
 use std::{collections::HashMap, fs::File};
 
-fn get_prefix_size(its_a_byte: u8) -> u8 {
-    // special case for any empty byte.
-    if its_a_byte == 0 {
-        return 1;
-    }
-
-    return 8 - its_a_byte.leading_zeros() as u8;
-}
-
-pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: u8, prefix: &mut HashMap<char, (u8, u8)>) {
+pub fn get_prefixes(
+    node: &Option<Box<HuffNode>>,
+    state: u8,
+    prefix: &mut HashMap<char, (u8, u8)>,
+    meaningful_bits: u8,
+) {
     if node.is_none() {
         return;
     }
 
     if let Some(curr_node) = node {
         if let Some(character) = curr_node.character {
-            prefix.insert(character, (state, get_prefix_size(state)));
+            prefix.insert(character, (state, meaningful_bits));
         } else {
-            get_prefixes(&curr_node.left, state << 1, prefix);
-            get_prefixes(&curr_node.right, state << 1 | 1, prefix);
+            get_prefixes(&curr_node.left, state << 1, prefix, meaningful_bits + 1);
+            get_prefixes(
+                &curr_node.right,
+                state << 1 | 1,
+                prefix,
+                meaningful_bits + 1,
+            );
         }
     }
 }
@@ -34,11 +35,20 @@ pub fn get_prefixes(node: &Option<Box<HuffNode>>, state: u8, prefix: &mut HashMa
 /// it takes char as a key. the tuple values are (prefix, number of meaningful bits)
 /// the meaningful bits piece is used so we know how many to write while encoding
 /// so we can pack bits tight
-pub fn generate_prefix_table(node: Option<Box<HuffNode>>) -> HashMap<char, (u8, u8)> {
+pub fn generate_prefix_table(root: Option<Box<HuffNode>>) -> HashMap<char, (u8, u8)> {
     let mut prefix_table = HashMap::new();
     let mut state: u8 = 0;
 
-    get_prefixes(&node, state, &mut prefix_table);
+    // special case: there is one distinct char in the input, so there is only one meaningful bit.
+    // as-is, it would get assigned a 0 for meaningful_bits, so we handle that here
+    if let Some(node) = &root {
+        if let Some(character) = node.character {
+            get_prefixes(&root, state, &mut prefix_table, 1);
+        } else {
+            get_prefixes(&root, state, &mut prefix_table, 0);
+        }
+    }
+
 
     prefix_table
 }
