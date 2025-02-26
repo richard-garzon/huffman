@@ -37,7 +37,7 @@ impl BitWriter {
         }
     }
 
-    fn flush(&mut self) {
+    pub fn flush(&mut self) {
         if self.bit_position > 0 {
             self.current_byte <<= 8 - self.bit_position;
             self.buf.push(self.current_byte);

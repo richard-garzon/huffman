@@ -49,7 +49,6 @@ pub fn generate_prefix_table(root: Option<Box<HuffNode>>) -> HashMap<char, (u8, 
         }
     }
 
-
     prefix_table
 }
 
@@ -114,7 +113,6 @@ fn get_encoded_data_with_header_impl(
     incomplete.extend_from_slice(curr_incomplete);
 }
 
-///
 pub fn get_encoded_data_with_header<R: Read>(
     file: R,
     prefix_table: HashMap<char, (u8, u8)>,
@@ -138,9 +136,9 @@ pub fn get_encoded_data_with_header<R: Read>(
         );
     }
 
-    let current_bit_pos = &bw.get_current_pos();
-
-    println!("current bit pos: {}", current_bit_pos);
+    let current_bit_pos = bw.get_current_pos() as u32;
+    bw.flush();
+    bw.write_bits(current_bit_pos, 8);
 
     let data = bw.get_vec().unwrap();
     let data_size = data.len() as u32;
@@ -333,8 +331,8 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 1;
-        let expected = vec![0b00000000];
+        let expected_size = 2;
+        let expected = vec![0b00000000, 0b00000011];
 
         let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
 
@@ -350,8 +348,8 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 1;
-        let expected = vec![0b11000000];
+        let expected_size = 2;
+        let expected = vec![0b11000000, 0b00000011];
 
         let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
 
@@ -367,8 +365,8 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 2;
-        let expected = vec![0b11111110, 0b00000000];
+        let expected_size = 3;
+        let expected = vec![0b11111110, 0b00000000, 0b00000100];
 
         let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
 
@@ -385,8 +383,8 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 1;
-        let expected = vec![0b00011011];
+        let expected_size = 2;
+        let expected = vec![0b00011011, 0b00000000];
 
         let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
 
