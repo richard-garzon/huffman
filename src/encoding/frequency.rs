@@ -40,7 +40,7 @@ impl Freq {
         }
     }
 
-    pub fn count_chars(&mut self, file: File) {
+    pub fn count_chars(&mut self, file: &File) {
         let mut reader = BufReader::new(file);
         let mut buffer = [0; 1024];
 
@@ -50,13 +50,6 @@ impl Freq {
             }
 
             self.update(&buffer[..bytes_read]);
-        }
-    }
-
-    pub fn clone(self) -> Freq {
-        Freq {
-            counter: self.counter.clone(),
-            incomplete: self.incomplete.clone(),
         }
     }
 }

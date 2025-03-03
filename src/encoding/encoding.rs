@@ -1,10 +1,6 @@
-use super::{
-    bitstuff::BitWriter,
-    frequency::{self, Freq},
-    tree::{generate_tree, HuffNode},
-};
-use std::io::{BufReader, Cursor, Read, Result};
-use std::{collections::HashMap, fs::File};
+use super::{bitstuff::BitWriter, tree::HuffNode};
+use std::collections::HashMap;
+use std::io::{BufReader, Read};
 
 pub fn get_prefixes(
     node: &Option<Box<HuffNode>>,
@@ -37,12 +33,12 @@ pub fn get_prefixes(
 /// so we can pack bits tight
 pub fn generate_prefix_table(root: Option<Box<HuffNode>>) -> HashMap<char, (u8, u8)> {
     let mut prefix_table = HashMap::new();
-    let mut state: u8 = 0;
+    let state: u8 = 0;
 
     // special case: there is one distinct char in the input, so there is only one meaningful bit.
     // as-is, it would get assigned a 0 for meaningful_bits, so we handle that here
     if let Some(node) = &root {
-        if let Some(character) = node.character {
+        if let Some(_character) = node.character {
             get_prefixes(&root, state, &mut prefix_table, 1);
         } else {
             get_prefixes(&root, state, &mut prefix_table, 0);
@@ -148,6 +144,10 @@ pub fn get_encoded_data_with_header<R: Read>(
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
+    use crate::encoding::{frequency::Freq, tree::generate_tree};
+
     use super::*;
 
     #[test]

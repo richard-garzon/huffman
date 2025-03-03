@@ -86,30 +86,29 @@ impl Ord for HuffNode {
     }
 }
 
-pub fn verify_tree(node: &Option<Box<HuffNode>>, freq: &Freq) {
-    let curr_node = node.as_ref().unwrap();
-    println!("printing node:");
-    println!("{:?}", curr_node);
-    if let Some(character) = curr_node.character {
-        assert_eq!(freq.counter.get(&character).unwrap(), &curr_node.weight)
-    } else {
-        let left = curr_node.left.as_ref().unwrap();
-        let right = curr_node.right.as_ref().unwrap();
-
-        let left_weight = left.weight;
-        let right_weight = right.weight;
-
-        assert_eq!(curr_node.weight, left_weight + right_weight);
-
-        verify_tree(&curr_node.left, &freq);
-        verify_tree(&curr_node.right, &freq);
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    pub fn verify_tree(node: &Option<Box<HuffNode>>, freq: &Freq) {
+        let curr_node = node.as_ref().unwrap();
+        println!("printing node:");
+        println!("{:?}", curr_node);
+        if let Some(character) = curr_node.character {
+            assert_eq!(freq.counter.get(&character).unwrap(), &curr_node.weight)
+        } else {
+            let left = curr_node.left.as_ref().unwrap();
+            let right = curr_node.right.as_ref().unwrap();
+
+            let left_weight = left.weight;
+            let right_weight = right.weight;
+
+            assert_eq!(curr_node.weight, left_weight + right_weight);
+
+            verify_tree(&curr_node.left, &freq);
+            verify_tree(&curr_node.right, &freq);
+        }
+    }
     #[test]
     fn test_create_node() {
         let test_char = 'a';

@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io::{self};
 
 pub struct BitWriter {
     buf: Vec<u8>,
