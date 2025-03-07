@@ -1,4 +1,5 @@
 pub mod bitstuff;
+pub mod decoding;
 pub mod encoding;
 pub mod frequency;
 pub mod huffio;

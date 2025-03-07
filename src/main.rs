@@ -5,6 +5,7 @@ use std::io::{Seek, SeekFrom};
 
 use clap::Parser;
 
+use encoding::decoding::decode_tree_header_with_size;
 use encoding::encoding::{
     generate_prefix_table, get_encoded_data_with_header, get_tree_header_with_size,
 };
