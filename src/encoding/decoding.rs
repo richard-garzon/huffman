@@ -11,10 +11,10 @@ use super::tree::HuffNode;
 ///
 /// next we just decode the file and restore the data to its original state
 
-pub fn decode_tree_header_with_size(tree_data: Vec<u8>) -> Option<Box<HuffNode>> {
-    // before implementing this, implement a bit iterator that makes it easy to
-    // move through these vecs of u8 without have to handle indices or nested loops
-}
+//pub fn decode_tree_header_with_size(tree_data: Vec<u8>) -> Option<Box<HuffNode>> {
+// before implementing this, implement a bit iterator that makes it easy to
+// move through these vecs of u8 without have to handle indices or nested loops
+//}
 
 #[cfg(test)]
 mod tests {

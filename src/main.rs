@@ -5,7 +5,7 @@ use std::io::{Seek, SeekFrom};
 
 use clap::Parser;
 
-use encoding::decoding::decode_tree_header_with_size;
+use encoding::bitreader::BitReader;
 use encoding::encoding::{
     generate_prefix_table, get_encoded_data_with_header, get_tree_header_with_size,
 };
@@ -54,4 +54,7 @@ fn main() {
     write_compressed_data(&file, header).unwrap();
     write_size_header(&file, data_size).unwrap();
     write_compressed_data(&file, data).unwrap();
+
+    // here so tests run
+    let mut br = BitReader::new(vec![3u8]);
 }

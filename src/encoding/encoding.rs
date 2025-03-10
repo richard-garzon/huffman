@@ -1,4 +1,4 @@
-use super::{bitstuff::BitWriter, tree::HuffNode};
+use super::{bitwriter::BitWriter, tree::HuffNode};
 use std::collections::HashMap;
 use std::io::{BufReader, Read};
 
