@@ -49,4 +49,14 @@ mod tests {
 
         assert_eq!(1u8, result.unwrap());
     }
+
+    #[test]
+    fn test_read_three_bytes() {
+        let input = vec![0b10100000];
+        let mut br = BitReader::new(input);
+
+        assert_eq!(1u8, br.next().unwrap());
+        assert_eq!(0u8, br.next().unwrap());
+        assert_eq!(1u8, br.next().unwrap());
+    }
 }
