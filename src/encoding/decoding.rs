@@ -2,6 +2,7 @@ use crate::encoding::frequency::Freq;
 use crate::encoding::tree::generate_tree;
 use std::collections::HashMap;
 
+use super::bitreader::BitReader;
 use super::tree::HuffNode;
 
 /// how to start decoding...
@@ -10,14 +11,37 @@ use super::tree::HuffNode;
 /// we should go from <string of bits> -> prefix table
 ///
 /// next we just decode the file and restore the data to its original state
+///
 
-//pub fn decode_tree_header_with_size(tree_data: Vec<u8>) -> Option<Box<HuffNode>> {
-// before implementing this, implement a bit iterator that makes it easy to
-// move through these vecs of u8 without have to handle indices or nested loops
-//}
+pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>> {
+    let mut br = BitReader::new(tree_data.to_vec());
+
+    let curr_bit = br.next().unwrap();
+
+    if curr_bit == 1u8 {
+        // it's a leaf node
+        let char_bits = br.read_bits(32);
+        let c = std::str::from_utf8(&char_bits).unwrap().chars().next();
+
+        let ret_node = HuffNode::new(c, 0);
+        Some(Box::new(ret_node))
+    } else {
+        let left = decode_tree_header_with_size(&tree_data);
+        let right = decode_tree_header_with_size(&tree_data);
+
+        let mut ret_node = HuffNode::new(None, 0);
+
+        ret_node.left = left;
+        ret_node.right = right;
+
+        Some(Box::new(ret_node))
+    }
+}
 
 #[cfg(test)]
 mod tests {
+    use crate::encoding::encoding::generate_prefix_table;
+
     use super::*;
 
     #[test]
@@ -32,5 +56,6 @@ mod tests {
         let mut freq = Freq::new();
         freq.update(expected.as_bytes());
         let root = generate_tree(&freq);
+        let expected_prefix = generate_prefix_table(root);
     }
 }
