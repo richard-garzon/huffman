@@ -13,9 +13,10 @@ use super::tree::HuffNode;
 /// next we just decode the file and restore the data to its original state
 ///
 
-pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>> {
-    let mut br = BitReader::new(tree_data.to_vec());
-
+pub fn decode_tree_header_with_size_impl(
+    tree_data: &Vec<u8>,
+    br: &mut BitReader,
+) -> Option<Box<HuffNode>> {
     let curr_bit = br.next().unwrap();
 
     if curr_bit == 1u8 {
@@ -28,8 +29,8 @@ pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>
         let ret_node = HuffNode::new(c, 0);
         Some(Box::new(ret_node))
     } else {
-        let left: Option<Box<HuffNode>> = decode_tree_header_with_size(&tree_data);
-        let right = decode_tree_header_with_size(&tree_data);
+        let left: Option<Box<HuffNode>> = decode_tree_header_with_size_impl(&tree_data, br);
+        let right = decode_tree_header_with_size_impl(&tree_data, br);
 
         let mut ret_node = HuffNode::new(None, 0);
 
@@ -38,6 +39,11 @@ pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>
 
         Some(Box::new(ret_node))
     }
+}
+
+pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>> {
+    let mut br = BitReader::new(tree_data.to_vec());
+    decode_tree_header_with_size_impl(tree_data, &mut br)
 }
 
 #[cfg(test)]
@@ -65,5 +71,28 @@ mod tests {
 
         println!("one: {:?}", result_prefix);
         println!("two: {:?}", expected_prefix);
+
+        assert_eq!(result_prefix, expected_prefix);
+    }
+
+    #[test]
+    fn test_decode_two_letter_tree_header() {
+        let input = vec![
+            0b01000000, 0b00000000, 0b00000000, 0b00011000, 0b10100000, 0b00000000, 0b00000000,
+            0b00001100, 0b00100000,
+        ];
+        let expected = "aab";
+        let mut freq = Freq::new();
+        freq.update(expected.as_bytes());
+        let root = generate_tree(&freq);
+        let expected_prefix = generate_prefix_table(root);
+
+        let result_tree = decode_tree_header_with_size(&input);
+        let result_prefix = generate_prefix_table(result_tree);
+
+        println!("one: {:?}", result_prefix);
+        println!("two: {:?}", expected_prefix);
+
+        assert_eq!(result_prefix, expected_prefix);
     }
 }
