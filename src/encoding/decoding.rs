@@ -20,13 +20,15 @@ pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>
 
     if curr_bit == 1u8 {
         // it's a leaf node
-        let char_bits = br.read_bits(32);
+        let mut char_bits = br.read_bits(32);
+        char_bits.reverse();
+        println!("one: {:?}", char_bits);
         let c = std::str::from_utf8(&char_bits).unwrap().chars().next();
 
         let ret_node = HuffNode::new(c, 0);
         Some(Box::new(ret_node))
     } else {
-        let left = decode_tree_header_with_size(&tree_data);
+        let left: Option<Box<HuffNode>> = decode_tree_header_with_size(&tree_data);
         let right = decode_tree_header_with_size(&tree_data);
 
         let mut ret_node = HuffNode::new(None, 0);
@@ -57,5 +59,11 @@ mod tests {
         freq.update(expected.as_bytes());
         let root = generate_tree(&freq);
         let expected_prefix = generate_prefix_table(root);
+
+        let result_tree = decode_tree_header_with_size(&input);
+        let result_prefix = generate_prefix_table(result_tree);
+
+        println!("one: {:?}", result_prefix);
+        println!("two: {:?}", expected_prefix);
     }
 }
