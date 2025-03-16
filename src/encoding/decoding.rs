@@ -71,7 +71,7 @@ pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<u8,
 pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec<char> {
     // number of bits to read from the encoded data
     let last_byte = data.last().unwrap();
-    let data_length = data.len() - 1;
+    let data_length = data.len() - 2;
 
     let mut characters: Vec<char> = Vec::new();
 
@@ -90,7 +90,6 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
 
     for _ in (0..*last_byte) {
         curr_prefix <= br.next().unwrap() & 1;
-
         if inverted_prefix_table.contains_key(&curr_prefix) {
             characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
             curr_prefix = 0u8;
