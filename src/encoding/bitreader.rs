@@ -15,6 +15,10 @@ impl BitReader {
         }
     }
 
+    pub fn get_current_byte(&self) -> usize {
+        return self.current_byte;
+    }
+
     pub fn read_bits(&mut self, num_bits: u32) -> Vec<u8> {
         if (self.data.len() * 8) < num_bits as usize {
             panic!("You tried to read more b its than exist in this BitReader")

@@ -134,9 +134,16 @@ pub fn get_encoded_data_with_header<R: Read>(
 
     let current_bit_pos = bw.get_current_pos() as u32;
     bw.flush();
+    // Here, we are adding the bit position of the last bit we should read
+    // in the last byte of encoded data. we append this to the encoded data
+    // so we can read it first during decoding, so we know when to stop
+    // while reading bits from the last byte.
     bw.write_bits(current_bit_pos, 8);
 
     let data = bw.get_vec().unwrap();
+    // The data length here is actually data_size - 1
+    // since the last byte is the byte with information about
+    // the number of bits to read from the last byte
     let data_size = data.len() as u32;
 
     (data_size, data)

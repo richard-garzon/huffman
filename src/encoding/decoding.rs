@@ -1,8 +1,10 @@
 use crate::encoding::frequency::Freq;
 use crate::encoding::tree::generate_tree;
 use std::collections::HashMap;
+use std::hash::Hash;
 
 use super::bitreader::BitReader;
+use super::bitwriter::BitWriter;
 use super::tree::HuffNode;
 
 /// how to start decoding...
@@ -56,6 +58,48 @@ pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>
     decode_tree_header_with_size_impl(tree_data, &mut br)
 }
 
+pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<u8, char> {
+    let mut inverted_prefix_table: HashMap<u8, char> = HashMap::new();
+
+    for (c, (prefix, d)) in prefix_table {
+        inverted_prefix_table.insert(prefix, c);
+    }
+
+    inverted_prefix_table
+}
+
+pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec<char> {
+    // number of bits to read from the encoded data
+    let last_byte = data.last().unwrap();
+    let data_length = data.len() - 1;
+
+    let mut characters: Vec<char> = Vec::new();
+
+    let mut br = BitReader::new(data.to_vec()); // yes i know this copies, i am lazy
+    let inverted_prefix_table = invert_prefix_table(prefix_table);
+    let mut curr_prefix = 0u8;
+
+    while (br.get_current_byte() < data_length) {
+        curr_prefix <<= br.next().unwrap() & 1;
+
+        if inverted_prefix_table.contains_key(&curr_prefix) {
+            characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
+            curr_prefix = 0u8;
+        }
+    }
+
+    for _ in (0..*last_byte) {
+        curr_prefix <= br.next().unwrap() & 1;
+
+        if inverted_prefix_table.contains_key(&curr_prefix) {
+            characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
+            curr_prefix = 0u8;
+        }
+    }
+
+    characters
+}
+
 #[cfg(test)]
 mod tests {
     use crate::encoding::encoding::generate_prefix_table;
@@ -98,5 +142,23 @@ mod tests {
         let result_prefix = generate_prefix_table(result_tree);
 
         assert_eq!(result_prefix, expected_prefix);
+    }
+
+    /// These tests for decoding data assume that we've consumed and read
+    /// the size of the data already, which are the first 4 bytes after the
+    /// tree header data.
+    #[test]
+    fn test_decode_data_one_distinct_char() {
+        let input: Vec<u8> = vec![0b00000000, 0b00000011];
+        let expected = "aaa";
+
+        let mut freq = Freq::new();
+        freq.update(expected.as_bytes());
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+
+        let result = decode_data(&input, prefix_table);
+
+        assert_eq!(expected.chars().collect::<Vec<char>>(), result);
     }
 }
