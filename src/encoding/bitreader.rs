@@ -56,7 +56,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_read_one_byte() {
+    fn test_read_one_bit() {
         let input = vec![0b10000000];
         let mut br = BitReader::new(input);
 
@@ -66,12 +66,22 @@ mod tests {
     }
 
     #[test]
-    fn test_read_three_bytes() {
+    fn test_read_three_bits() {
         let input = vec![0b10100000];
         let mut br = BitReader::new(input);
 
         assert_eq!(1u8, br.next().unwrap());
         assert_eq!(0u8, br.next().unwrap());
         assert_eq!(1u8, br.next().unwrap());
+    }
+
+    #[test]
+    fn test_read_two_bytes() {
+        let input = vec![0b10101010, 0b10001000];
+        let mut br = BitReader::new(input.clone());
+
+        let mut char_bits = br.read_bits(16);
+
+        assert_eq!(input, char_bits);
     }
 }

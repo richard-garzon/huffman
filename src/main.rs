@@ -57,4 +57,8 @@ fn main() {
 
     // here so tests run
     let mut br = BitReader::new(vec![3u8]);
+
+    let c = 'a';
+
+    println!("char: {} bytes: {:32b} hex: {:02X}", c, c as u32, c as u32);
 }
