@@ -21,17 +21,19 @@ pub fn decode_tree_header_with_size_impl(
 
     if curr_bit == 1u8 {
         // it's a leaf node
-        let mut char_bits = br.read_bits(32);
+        let char_bits = br.read_bits(32);
 
         let u32_check: [u8; 4] = char_bits
             .try_into()
             .expect("Vec<u8> must have exactly 4 elements");
         let char_as_u32 = u32::from_be_bytes(u32_check);
 
-        //println!("one: {:?}", char_bits);
         let decode_char = match char::from_u32(char_as_u32) {
             Some(c) => c,
-            None => panic!("u32: {} is not a valid Unicode scalar value", char_as_u32),
+            None => panic!(
+                "from_u32 error: {} is not a valid Unicode scalar value.",
+                char_as_u32
+            ),
         };
 
         let ret_node = HuffNode::new(Some(decode_char), 0);
@@ -77,9 +79,6 @@ mod tests {
         let result_tree = decode_tree_header_with_size(&input);
         let result_prefix = generate_prefix_table(result_tree);
 
-        println!("one: {:?}", result_prefix);
-        println!("two: {:?}", expected_prefix);
-
         assert_eq!(result_prefix, expected_prefix);
     }
 
@@ -97,9 +96,6 @@ mod tests {
 
         let result_tree = decode_tree_header_with_size(&input);
         let result_prefix = generate_prefix_table(result_tree);
-
-        println!("one: {:?}", result_prefix);
-        println!("two: {:?}", expected_prefix);
 
         assert_eq!(result_prefix, expected_prefix);
     }
