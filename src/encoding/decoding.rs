@@ -71,25 +71,33 @@ pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<u8,
 pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec<char> {
     // number of bits to read from the encoded data
     let last_byte = data.last().unwrap();
-    let data_length = data.len() - 2;
+    let end = match last_byte {
+        0 => 1,
+        _ => 2
+    };
+    let data_length = data.len() - end;
 
     let mut characters: Vec<char> = Vec::new();
 
     let mut br = BitReader::new(data.to_vec()); // yes i know this copies, i am lazy
     let inverted_prefix_table = invert_prefix_table(prefix_table);
+    println!("inverted table: {:?}", inverted_prefix_table);
     let mut curr_prefix = 0u8;
 
-    while (br.get_current_byte() < data_length) {
-        curr_prefix <<= br.next().unwrap() & 1;
-
+    while br.get_current_byte() < data_length {
+        curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
+        println!("one");
+        println!("foo: {}", curr_prefix);
         if inverted_prefix_table.contains_key(&curr_prefix) {
             characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
             curr_prefix = 0u8;
         }
     }
 
-    for _ in (0..*last_byte) {
-        curr_prefix <= br.next().unwrap() & 1;
+    for _ in 0..*last_byte {
+        curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
+        println!("two");
+        println!("bar: {}", curr_prefix);
         if inverted_prefix_table.contains_key(&curr_prefix) {
             characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
             curr_prefix = 0u8;
@@ -155,6 +163,56 @@ mod tests {
         freq.update(expected.as_bytes());
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
+
+        let result = decode_data(&input, prefix_table);
+
+        assert_eq!(expected.chars().collect::<Vec<char>>(), result);
+    }
+
+    #[test]
+    fn test_decode_data_two_distinct_chars() {
+        let input: Vec<u8> = vec![0b11000000, 0b00000011];
+
+        let expected = "aab";
+
+        let mut freq = Freq::new();
+        freq.update(expected.as_bytes());
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+
+        let result = decode_data(&input, prefix_table);
+
+        assert_eq!(expected.chars().collect::<Vec<char>>(), result);
+    }
+
+    #[test]
+    fn test_decode_data_three_distinct_chars() {
+        let input: Vec<u8> = vec![0b11111110, 0b00000000, 0b00000100];
+
+        let expected = "aaabcccc";
+
+        let mut freq = Freq::new();
+        freq.update(expected.as_bytes());
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+
+        let result = decode_data(&input, prefix_table);
+
+        assert_eq!(expected.chars().collect::<Vec<char>>(), result);
+    }
+
+    #[test]
+    fn test_decode_data_no_distinct_chars() {
+        let input: Vec<u8> = vec![0b00011011, 0b00000000];
+
+        let expected = "abcd";
+
+        let mut freq = Freq::new();
+        freq.update(expected.as_bytes());
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+
+        println!("prefix: {:?}", prefix_table);
 
         let result = decode_data(&input, prefix_table);
 
