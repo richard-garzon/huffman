@@ -73,7 +73,7 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
     let last_byte = data.last().unwrap();
     let end = match last_byte {
         0 => 1,
-        _ => 2
+        _ => 2,
     };
     let data_length = data.len() - end;
 
