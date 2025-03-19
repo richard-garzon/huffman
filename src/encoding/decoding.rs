@@ -58,11 +58,11 @@ pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>
     decode_tree_header_with_size_impl(tree_data, &mut br)
 }
 
-pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<u8, char> {
-    let mut inverted_prefix_table: HashMap<u8, char> = HashMap::new();
+pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<(u8, u8), char> {
+    let mut inverted_prefix_table: HashMap<(u8, u8), char> = HashMap::new();
 
-    for (c, (prefix, d)) in prefix_table {
-        inverted_prefix_table.insert(prefix, c);
+    for (c, (prefix, prefix_length)) in prefix_table {
+        inverted_prefix_table.insert((prefix, prefix_length), c);
     }
 
     inverted_prefix_table
@@ -81,26 +81,36 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
 
     let mut br = BitReader::new(data.to_vec()); // yes i know this copies, i am lazy
     let inverted_prefix_table = invert_prefix_table(prefix_table);
-    println!("inverted table: {:?}", inverted_prefix_table);
     let mut curr_prefix = 0u8;
+    let mut curr_prefix_length = 0u8;
 
     while br.get_current_byte() < data_length {
         curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
-        println!("one");
-        println!("foo: {}", curr_prefix);
-        if inverted_prefix_table.contains_key(&curr_prefix) {
-            characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
+        curr_prefix_length += 1;
+        if inverted_prefix_table.contains_key(&(curr_prefix, curr_prefix_length)) {
+            characters.push(
+                inverted_prefix_table
+                    .get(&(curr_prefix, curr_prefix_length))
+                    .unwrap()
+                    .clone(),
+            );
             curr_prefix = 0u8;
+            curr_prefix_length = 0u8;
         }
     }
 
     for _ in 0..*last_byte {
         curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
-        println!("two");
-        println!("bar: {}", curr_prefix);
-        if inverted_prefix_table.contains_key(&curr_prefix) {
-            characters.push(inverted_prefix_table.get(&curr_prefix).unwrap().clone());
+        curr_prefix_length += 1;
+        if inverted_prefix_table.contains_key(&(curr_prefix, curr_prefix_length)) {
+            characters.push(
+                inverted_prefix_table
+                    .get(&(curr_prefix, curr_prefix_length))
+                    .unwrap()
+                    .clone(),
+            );
             curr_prefix = 0u8;
+            curr_prefix_length = 0u8;
         }
     }
 
@@ -211,8 +221,6 @@ mod tests {
         freq.update(expected.as_bytes());
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
-
-        println!("prefix: {:?}", prefix_table);
 
         let result = decode_data(&input, prefix_table);
 
