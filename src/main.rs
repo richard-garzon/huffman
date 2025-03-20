@@ -10,7 +10,7 @@ use encoding::encoding::{
     generate_prefix_table, get_encoded_data_with_header, get_tree_header_with_size,
 };
 use encoding::frequency::Freq;
-use encoding::huffio::{write_compressed_data, write_size_header};
+use encoding::huffio::{decompress_data, write_compressed_data, write_size_header};
 use encoding::tree::generate_tree;
 
 #[derive(Parser)]
@@ -47,16 +47,14 @@ fn main() {
 
     let output_filename = &mut cli.file_name.unwrap().clone();
     output_filename.push_str("_huff");
+    {
+        let encoded_file = File::create(&output_filename).unwrap();
 
-    let file = File::create(output_filename).unwrap();
-
-    write_size_header(&file, header_size).unwrap();
-    write_compressed_data(&file, header).unwrap();
-    write_size_header(&file, data_size).unwrap();
-    write_compressed_data(&file, data).unwrap();
-
-    // here so tests run
-    let mut br = BitReader::new(vec![3u8]);
-
-    let c = 'a';
+        write_size_header(&encoded_file, header_size).unwrap();
+        write_compressed_data(&encoded_file, header).unwrap();
+        write_size_header(&encoded_file, data_size).unwrap();
+        write_compressed_data(&encoded_file, data).unwrap();
+    }
+    let mut compressed_file = File::open(output_filename).unwrap();
+    decompress_data(&mut compressed_file, String::from("decoded_file.txt")).unwrap();
 }
