@@ -125,7 +125,12 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::encoding::generate_prefix_table;
+    use crate::encoding::{
+        encoding::{generate_prefix_table, get_encoded_data_with_header},
+        test_cases,
+    };
+
+    use std::io::Cursor;
 
     use super::*;
 
@@ -237,12 +242,11 @@ mod tests {
     fn test_encode_decode_small_string() {
         let mut freq = Freq::new();
         let test_input = "aaabccccDJEisérables
-Com"
-        .as_bytes();
-        freq.update(test_input);
+Com";
+        freq.update(test_input.as_bytes());
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
-        let test_file = Cursor::new(test_input.to_vec());
+        let test_file = Cursor::new(test_input.as_bytes());
         let expected_size = 3;
         let expected = vec![0b11111110, 0b00000000, 0b00000100];
 
@@ -251,6 +255,23 @@ Com"
 
         let rez = decode_data(&encoded_data, prefix_table);
 
-        println!("guau: {:?}", rez);
+        assert_eq!(rez, test_input.chars().collect::<Vec<char>>());
+    }
+
+    #[test]
+    fn test_encode_decode_bigger_string() {
+        let mut freq = Freq::new();
+        let test_input = test_cases::SAMPLE_TEST;
+        freq.update(test_input.as_bytes());
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.as_bytes());
+
+        let (data_size, encoded_data) =
+            get_encoded_data_with_header(test_file, prefix_table.clone());
+
+        let rez = decode_data(&encoded_data, prefix_table);
+
+        assert_eq!(rez, test_input.chars().collect::<Vec<char>>());
     }
 }

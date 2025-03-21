@@ -56,5 +56,5 @@ fn main() {
         write_compressed_data(&encoded_file, data).unwrap();
     }
     let mut compressed_file = File::open(output_filename).unwrap();
-    decompress_data(&mut compressed_file, String::from("decoded_file1.txt")).unwrap();
+    decompress_data(&mut compressed_file, String::from("decoded_file.txt")).unwrap();
 }

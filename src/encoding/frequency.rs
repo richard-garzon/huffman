@@ -56,6 +56,8 @@ impl Freq {
 
 #[cfg(test)]
 mod tests {
+    use crate::encoding::test_cases;
+
     use super::*;
 
     #[test]
@@ -117,5 +119,54 @@ mod tests {
 
         assert_eq!(freq.counter.get(&'и').unwrap(), &1024);
         assert_eq!(freq.counter.get(&'п').unwrap(), &1024);
+    }
+
+    #[test]
+    fn test_freq_sample_paragraph() {
+        let mut freq = Freq::new();
+        let test_input = test_cases::SAMPLE_TEST;
+        let expected_counter_state: HashMap<char, u32> = HashMap::from([
+            (' ', 75),
+            ('e', 47),
+            ('t', 40),
+            ('o', 37),
+            ('r', 22),
+            ('n', 22),
+            ('i', 21),
+            ('a', 20),
+            ('h', 19),
+            ('s', 19),
+            ('u', 12),
+            ('w', 12),
+            ('c', 11),
+            ('d', 10),
+            ('y', 9),
+            ('l', 9),
+            ('f', 7),
+            ('\n', 6),
+            ('g', 6),
+            ('.', 5),
+            ('k', 4),
+            ('m', 4),
+            ('B', 3),
+            ('v', 3),
+            ('b', 3),
+            ('U', 2),
+            ('S', 2),
+            ('p', 2),
+            (',', 2),
+            ('T', 1),
+            ('Y', 1),
+            ('-', 1),
+            ('P', 1),
+            ('j', 1),
+            ('G', 1),
+            ('L', 1),
+            ('I', 1),
+        ]);
+
+        freq.update(&test_input.as_bytes());
+
+        assert_eq!(expected_counter_state, freq.counter);
     }
 }
