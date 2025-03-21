@@ -62,6 +62,12 @@ pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<(u8
     let mut inverted_prefix_table: HashMap<(u8, u8), char> = HashMap::new();
 
     for (c, (prefix, prefix_length)) in prefix_table {
+        if inverted_prefix_table.contains_key(&(prefix, prefix_length)) {
+            panic!(
+                "Error in invert_prefix_table(), key already exists: {:?}",
+                &(prefix, prefix_length)
+            )
+        }
         inverted_prefix_table.insert((prefix, prefix_length), c);
     }
 
@@ -225,5 +231,26 @@ mod tests {
         let result = decode_data(&input, prefix_table);
 
         assert_eq!(expected.chars().collect::<Vec<char>>(), result);
+    }
+
+    #[test]
+    fn test_encode_decode_small_string() {
+        let mut freq = Freq::new();
+        let test_input = "aaabccccDJEisérables
+Com"
+        .as_bytes();
+        freq.update(test_input);
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.to_vec());
+        let expected_size = 3;
+        let expected = vec![0b11111110, 0b00000000, 0b00000100];
+
+        let (data_size, encoded_data) =
+            get_encoded_data_with_header(test_file, prefix_table.clone());
+
+        let rez = decode_data(&encoded_data, prefix_table);
+
+        println!("guau: {:?}", rez);
     }
 }

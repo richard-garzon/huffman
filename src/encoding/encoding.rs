@@ -14,6 +14,9 @@ pub fn get_prefixes(
 
     if let Some(curr_node) = node {
         if let Some(character) = curr_node.character {
+            if prefix.contains_key(&character) {
+                panic!("Character already exists");
+            }
             prefix.insert(character, (state, meaningful_bits));
         } else {
             get_prefixes(&curr_node.left, state << 1, prefix, meaningful_bits + 1);
