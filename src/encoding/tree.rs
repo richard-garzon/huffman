@@ -88,6 +88,8 @@ impl Ord for HuffNode {
 
 #[cfg(test)]
 mod tests {
+    use crate::encoding::test_cases;
+
     use super::*;
 
     pub fn verify_tree(node: &Option<Box<HuffNode>>, freq: &Freq) {
@@ -214,6 +216,17 @@ mod tests {
         let test_input = "abcd".as_bytes();
 
         freq.update(test_input);
+
+        let root = generate_tree(&freq);
+
+        verify_tree(&root, &freq);
+    }
+
+    #[test]
+    fn test_tree_bigger_string() {
+        let mut freq = Freq::new();
+        let test_input = test_cases::SAMPLE_TEST;
+        freq.update(test_input.as_bytes());
 
         let root = generate_tree(&freq);
 
