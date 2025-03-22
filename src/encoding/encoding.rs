@@ -156,7 +156,7 @@ pub fn get_encoded_data_with_header<R: Read>(
 mod tests {
     use std::io::Cursor;
 
-    use crate::encoding::{frequency::Freq, tree::generate_tree};
+    use crate::encoding::{frequency::Freq, test_cases, tree::generate_tree};
 
     use super::*;
 
@@ -384,7 +384,6 @@ mod tests {
         assert_eq!(encoded_data, expected);
     }
 
-    // this fails, result encoded data is indeterminate!
     #[test]
     fn test_get_encoded_data_with_header_no_duplicates() {
         let mut freq = Freq::new();
@@ -400,5 +399,23 @@ mod tests {
 
         assert_eq!(data_size, expected_size);
         assert_eq!(encoded_data, expected);
+    }
+
+    #[test]
+    fn test_get_encoded_data_with_header_bigger_case() {
+        let mut freq = Freq::new();
+        let test_input = test_cases::SAMPLE_TEST;
+        freq.update(test_input.as_bytes());
+        let root = generate_tree(&freq);
+        let prefix_table = generate_prefix_table(root);
+        let test_file = Cursor::new(test_input.as_bytes().to_vec());
+        let expected_size = 2;
+        let expected = vec![0b00011011, 0b00000000];
+
+        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+
+        for byte in &encoded_data {
+            println!("{:08b}", byte);
+        }
     }
 }
