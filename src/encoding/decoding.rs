@@ -301,7 +301,7 @@ Com";
     #[test]
     fn test_encode_decode_sample_string() {
         let mut freq = Freq::new();
-        let test_input = test_cases::CAPITAL_TEST;
+        let test_input = test_cases::SAMPLE_TEST;
         freq.update(test_input.as_bytes());
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
