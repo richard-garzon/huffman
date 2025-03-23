@@ -1,5 +1,3 @@
-use super::bitwriter::BitWriter;
-
 pub struct BitReader {
     data: Vec<u8>,
     current_byte: usize,
@@ -24,12 +22,30 @@ impl BitReader {
             panic!("You tried to read more b its than exist in this BitReader")
         }
 
-        // it feels lazy to use BitWriter here but it will do I want correctly so...
-        let mut bw = BitWriter::new();
+        let mut bits = Vec::new();
+        let mut current_byte = 0u8;
+        let mut bits_collected = 0;
+
         for _ in 0..num_bits {
-            bw.write_bit(self.next().unwrap());
+            if let Some(bit) = self.next() {
+                current_byte = (current_byte << 1) | bit;
+                bits_collected += 1;
+
+                if bits_collected == 8 {
+                    bits.push(current_byte);
+                    current_byte = 0;
+                    bits_collected = 0;
+                }
+            } else {
+                break;
+            }
         }
-        bw.get_vec().unwrap()
+
+        if bits_collected > 0 {
+            current_byte <<= 8 - bits_collected;
+            bits.push(current_byte);
+        }
+        bits
     }
 }
 
