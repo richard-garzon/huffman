@@ -83,7 +83,7 @@ pub fn get_tree_header_with_size(node: &Option<Box<HuffNode>>) -> (u32, Vec<u8>)
     (header_size, header)
 }
 
-fn get_encoded_data_with_header_impl(
+fn get_encoded_data_impl(
     prefix_table: &HashMap<char, (u8, u8)>,
     bw: &mut BitWriter,
     incomplete: &mut Vec<u8>,
@@ -112,10 +112,7 @@ fn get_encoded_data_with_header_impl(
     incomplete.extend_from_slice(curr_incomplete);
 }
 
-pub fn get_encoded_data_with_header<R: Read>(
-    file: R,
-    prefix_table: HashMap<char, (u8, u8)>,
-) -> (u32, Vec<u8>) {
+pub fn get_encoded_data<R: Read>(file: R, prefix_table: HashMap<char, (u8, u8)>) -> Vec<u8> {
     let mut bw = BitWriter::new();
     let mut incomplete: Vec<u8> = Vec::new();
 
@@ -127,7 +124,7 @@ pub fn get_encoded_data_with_header<R: Read>(
             break;
         }
 
-        get_encoded_data_with_header_impl(
+        get_encoded_data_impl(
             &prefix_table,
             &mut bw,
             &mut incomplete,
@@ -143,20 +140,14 @@ pub fn get_encoded_data_with_header<R: Read>(
     // while reading bits from the last byte.
     bw.write_bits(current_bit_pos, 8);
 
-    let data = bw.get_vec().unwrap();
-    // The data length here is actually data_size - 1
-    // since the last byte is the byte with information about
-    // the number of bits to read from the last byte
-    let data_size = data.len() as u32;
-
-    (data_size, data)
+    bw.get_vec().unwrap()
 }
 
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
 
-    use crate::encoding::{frequency::Freq, test_cases, tree::generate_tree};
+    use crate::encoding::{frequency::Freq, tree::generate_tree};
 
     use super::*;
 
@@ -282,27 +273,6 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    // #[test]
-    fn test_make_header_for_sample_case() {
-        let mut freq = Freq::new();
-        let test_input = test_cases::SAMPLE_TEST;
-        freq.update(test_input.as_bytes());
-        let root = generate_tree(&freq);
-        let mut bw = BitWriter::new();
-        let expected = vec![
-            0b00100000, 0b00000000, 0b00000000, 0b00001100, 0b00110000, 0b00000000, 0b00000000,
-            0b00000110, 0b00101000, 0b00000000, 0b00000000, 0b00000011, 0b00011000,
-        ];
-
-        generate_header(&root, &mut bw);
-
-        let food = bw.get_vec().unwrap();
-
-        for byte in &food {
-            println!("{:08b}", byte);
-        }
-    }
-
     #[test]
     fn test_get_tree_header_with_size() {
         let mut freq = Freq::new();
@@ -362,12 +332,10 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 2;
         let expected = vec![0b00000000, 0b00000011];
 
-        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+        let encoded_data = get_encoded_data(test_file, prefix_table);
 
-        assert_eq!(data_size, expected_size);
         assert_eq!(encoded_data, expected);
     }
 
@@ -379,12 +347,10 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 2;
         let expected = vec![0b11000000, 0b00000011];
 
-        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+        let encoded_data = get_encoded_data(test_file, prefix_table);
 
-        assert_eq!(data_size, expected_size);
         assert_eq!(encoded_data, expected);
     }
 
@@ -396,12 +362,10 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 3;
         let expected = vec![0b11111110, 0b00000000, 0b00000100];
 
-        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+        let encoded_data = get_encoded_data(test_file, prefix_table);
 
-        assert_eq!(data_size, expected_size);
         assert_eq!(encoded_data, expected);
     }
 
@@ -413,30 +377,10 @@ mod tests {
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.to_vec());
-        let expected_size = 2;
         let expected = vec![0b00011011, 0b00000000];
 
-        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
+        let encoded_data = get_encoded_data(test_file, prefix_table);
 
-        assert_eq!(data_size, expected_size);
         assert_eq!(encoded_data, expected);
-    }
-
-    #[test]
-    fn test_get_encoded_data_with_header_bigger_case() {
-        let mut freq = Freq::new();
-        let test_input = test_cases::SAMPLE_TEST;
-        freq.update(test_input.as_bytes());
-        let root = generate_tree(&freq);
-        let prefix_table = generate_prefix_table(root);
-        let test_file = Cursor::new(test_input.as_bytes().to_vec());
-        let expected_size = 2;
-        let expected = vec![0b00011011, 0b00000000];
-
-        let (data_size, encoded_data) = get_encoded_data_with_header(test_file, prefix_table);
-
-        for byte in &encoded_data {
-            println!("{:08b}", byte);
-        }
     }
 }

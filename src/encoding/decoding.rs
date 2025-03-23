@@ -1,10 +1,6 @@
-use crate::encoding::frequency::Freq;
-use crate::encoding::tree::generate_tree;
 use std::collections::HashMap;
-use std::hash::Hash;
 
 use super::bitreader::BitReader;
-use super::bitwriter::BitWriter;
 use super::tree::HuffNode;
 
 /// how to start decoding...
@@ -125,12 +121,11 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
 
 #[cfg(test)]
 mod tests {
+    use crate::encoding::frequency::Freq;
+    use crate::encoding::tree::generate_tree;
     use crate::encoding::{
-        encoding::{
-            generate_prefix_table, get_encoded_data_with_header, get_tree_header_with_size,
-        },
-        test_cases::{self, SAMPLE_TEST},
-        tree,
+        encoding::{generate_prefix_table, get_encoded_data, get_tree_header_with_size},
+        test_cases,
     };
 
     use std::io::Cursor;
@@ -279,11 +274,8 @@ Com";
         let root = generate_tree(&freq);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.as_bytes());
-        let expected_size = 3;
-        let expected = vec![0b11111110, 0b00000000, 0b00000100];
 
-        let (data_size, encoded_data) =
-            get_encoded_data_with_header(test_file, prefix_table.clone());
+        let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
         let rez = decode_data(&encoded_data, prefix_table);
 
@@ -299,8 +291,7 @@ Com";
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.as_bytes());
 
-        let (data_size, encoded_data) =
-            get_encoded_data_with_header(test_file, prefix_table.clone());
+        let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
         let rez = decode_data(&encoded_data, prefix_table);
 
@@ -316,8 +307,7 @@ Com";
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.as_bytes());
 
-        let (data_size, encoded_data) =
-            get_encoded_data_with_header(test_file, prefix_table.clone());
+        let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
         let rez = decode_data(&encoded_data, prefix_table);
 

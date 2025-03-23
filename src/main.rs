@@ -5,10 +5,7 @@ use std::io::{Seek, SeekFrom};
 
 use clap::Parser;
 
-use encoding::bitreader::BitReader;
-use encoding::encoding::{
-    generate_prefix_table, get_encoded_data_with_header, get_tree_header_with_size,
-};
+use encoding::encoding::{generate_prefix_table, get_encoded_data, get_tree_header_with_size};
 use encoding::frequency::Freq;
 use encoding::huffio::{decompress_data, write_compressed_data, write_size_header};
 use encoding::tree::generate_tree;
@@ -43,7 +40,7 @@ fn main() {
 
     let _ = &file.seek(SeekFrom::Start(0));
 
-    let (data_size, data) = get_encoded_data_with_header(&file, prefix_table);
+    let data = get_encoded_data(&file, prefix_table);
 
     let output_filename = &mut cli.file_name.unwrap().clone();
     output_filename.push_str("_huff");
@@ -52,7 +49,6 @@ fn main() {
 
         write_size_header(&encoded_file, header_size).unwrap();
         write_compressed_data(&encoded_file, header).unwrap();
-        write_size_header(&encoded_file, data_size).unwrap();
         write_compressed_data(&encoded_file, data).unwrap();
     }
     let mut compressed_file = File::open(output_filename).unwrap();

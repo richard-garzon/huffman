@@ -84,7 +84,7 @@ mod tests {
         let input = vec![0b10101010, 0b10001000];
         let mut br = BitReader::new(input.clone());
 
-        let mut char_bits = br.read_bits(16);
+        let char_bits = br.read_bits(16);
 
         assert_eq!(input, char_bits);
     }

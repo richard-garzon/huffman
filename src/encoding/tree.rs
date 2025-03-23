@@ -25,6 +25,7 @@ pub fn generate_tree(freq: &Freq) -> Option<Box<HuffNode>> {
     min_heap.pop()
 }
 
+#[allow(dead_code)]
 pub fn print_tree(node: &Option<Box<HuffNode>>, prefix: &str, is_left: bool) {
     if let Some(node) = node {
         println!(
