@@ -12,4 +12,5 @@ using this eBook.";
 pub const CAPITAL_TEST: &str = "o Brother Where arT thou? 
         why doesn't this throw aANY AERROR weird. sTRane howe this doean't affect it
         ho Much more writing should I do to break this Thing? i am not sure what causes the 
-        issue.";
+        issue. Could it be that the length of the input data messes something up? or perhaps - it is
+        the sitribution of caharcters? wow my spelling is real ba";

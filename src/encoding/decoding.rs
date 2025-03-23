@@ -71,13 +71,14 @@ pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<(u8
 }
 
 pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec<char> {
-    // number of bits to read from the encoded data
-    let last_byte = data.last().unwrap();
-    let end = match last_byte {
-        0 => 1,
-        _ => 2,
+    // number of bits to read from the encoded data's last byte
+    let last_byte = *data.last().unwrap();
+    let bytes_to_read_in_last_byte = match last_byte {
+        0 => 8u8,
+        _ => last_byte,
     };
-    let data_length = data.len() - end;
+
+    let data_length = data.len() - 2;
 
     let mut characters: Vec<char> = Vec::new();
 
@@ -101,7 +102,7 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
         }
     }
 
-    for _ in 0..*last_byte {
+    for _ in 0..bytes_to_read_in_last_byte {
         curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
         curr_prefix_length += 1;
         if inverted_prefix_table.contains_key(&(curr_prefix, curr_prefix_length)) {
@@ -288,12 +289,15 @@ Com";
         let test_input = test_cases::CAPITAL_TEST;
         freq.update(test_input.as_bytes());
         let root = generate_tree(&freq);
+        let (_, encoded_header) = get_tree_header_with_size(&root);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.as_bytes());
+        let decoded_tree = decode_tree_header_with_size(&encoded_header);
+        let decoded_prefix_table = generate_prefix_table(decoded_tree);
 
         let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
-        let rez = decode_data(&encoded_data, prefix_table);
+        let rez = decode_data(&encoded_data, decoded_prefix_table);
 
         assert_eq!(rez, test_input.chars().collect::<Vec<char>>());
     }
@@ -304,12 +308,15 @@ Com";
         let test_input = test_cases::SAMPLE_TEST;
         freq.update(test_input.as_bytes());
         let root = generate_tree(&freq);
+        let (_, encoded_header) = get_tree_header_with_size(&root);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.as_bytes());
+        let decoded_tree = decode_tree_header_with_size(&encoded_header);
+        let decoded_prefix_table = generate_prefix_table(decoded_tree);
 
         let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
-        let rez = decode_data(&encoded_data, prefix_table);
+        let rez = decode_data(&encoded_data, decoded_prefix_table);
 
         assert_eq!(rez, test_input.chars().collect::<Vec<char>>());
     }
