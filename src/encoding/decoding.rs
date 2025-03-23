@@ -123,7 +123,7 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
 #[cfg(test)]
 mod tests {
     use crate::encoding::frequency::Freq;
-    use crate::encoding::tree::generate_tree;
+    use crate::encoding::tree::{self, generate_tree};
     use crate::encoding::{
         encoding::{generate_prefix_table, get_encoded_data, get_tree_header_with_size},
         test_cases,
@@ -309,9 +309,12 @@ Com";
         freq.update(test_input.as_bytes());
         let root = generate_tree(&freq);
         let (_, encoded_header) = get_tree_header_with_size(&root);
+        tree::print_tree(&root, "", true);
         let prefix_table = generate_prefix_table(root);
         let test_file = Cursor::new(test_input.as_bytes());
         let decoded_tree = decode_tree_header_with_size(&encoded_header);
+        println!("ddddd");
+        tree::print_tree(&decoded_tree, "", true);
         let decoded_prefix_table = generate_prefix_table(decoded_tree);
 
         let encoded_data = get_encoded_data(test_file, prefix_table.clone());
