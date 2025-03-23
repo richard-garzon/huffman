@@ -25,6 +25,25 @@ pub fn generate_tree(freq: &Freq) -> Option<Box<HuffNode>> {
     min_heap.pop()
 }
 
+pub fn print_tree(node: &Option<Box<HuffNode>>, prefix: &str, is_left: bool) {
+    if let Some(node) = node {
+        println!(
+            "{}{} - char: {}",
+            prefix,
+            if is_left { "├──" } else { "└──" },
+            if node.character != None {
+                node.character.unwrap()
+            } else {
+                '9'
+            }
+        );
+
+        let new_prefix = format!("{}{}", prefix, if is_left { "│   " } else { "    " });
+        print_tree(&node.left, &new_prefix, true);
+        print_tree(&node.right, &new_prefix, false);
+    }
+}
+
 #[derive(Debug)]
 pub struct HuffNode {
     pub character: Option<char>,

@@ -282,6 +282,27 @@ mod tests {
         assert_eq!(result, expected);
     }
 
+    // #[test]
+    fn test_make_header_for_sample_case() {
+        let mut freq = Freq::new();
+        let test_input = test_cases::SAMPLE_TEST;
+        freq.update(test_input.as_bytes());
+        let root = generate_tree(&freq);
+        let mut bw = BitWriter::new();
+        let expected = vec![
+            0b00100000, 0b00000000, 0b00000000, 0b00001100, 0b00110000, 0b00000000, 0b00000000,
+            0b00000110, 0b00101000, 0b00000000, 0b00000000, 0b00000011, 0b00011000,
+        ];
+
+        generate_header(&root, &mut bw);
+
+        let food = bw.get_vec().unwrap();
+
+        for byte in &food {
+            println!("{:08b}", byte);
+        }
+    }
+
     #[test]
     fn test_get_tree_header_with_size() {
         let mut freq = Freq::new();
