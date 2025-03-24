@@ -54,8 +54,8 @@ pub fn decode_tree_header_with_size(tree_data: &Vec<u8>) -> Option<Box<HuffNode>
     decode_tree_header_with_size_impl(tree_data, &mut br)
 }
 
-pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<(u8, u8), char> {
-    let mut inverted_prefix_table: HashMap<(u8, u8), char> = HashMap::new();
+pub fn invert_prefix_table(prefix_table: HashMap<char, (u32, u8)>) -> HashMap<(u32, u8), char> {
+    let mut inverted_prefix_table: HashMap<(u32, u8), char> = HashMap::new();
 
     for (c, (prefix, prefix_length)) in prefix_table {
         if inverted_prefix_table.contains_key(&(prefix, prefix_length)) {
@@ -70,7 +70,7 @@ pub fn invert_prefix_table(prefix_table: HashMap<char, (u8, u8)>) -> HashMap<(u8
     inverted_prefix_table
 }
 
-pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec<char> {
+pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u32, u8)>) -> Vec<char> {
     // number of bits to read from the encoded data's last byte
     let last_byte = *data.last().unwrap();
     let bytes_to_read_in_last_byte = match last_byte {
@@ -84,11 +84,11 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
 
     let mut br = BitReader::new(data.to_vec()); // yes i know this copies, i am lazy
     let inverted_prefix_table = invert_prefix_table(prefix_table);
-    let mut curr_prefix = 0u8;
+    let mut curr_prefix: u32 = 0;
     let mut curr_prefix_length = 0u8;
 
     while br.get_current_byte() < data_length {
-        curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
+        curr_prefix = (curr_prefix << 1) | ((br.next().unwrap()) as u32 & 1);
         curr_prefix_length += 1;
         if inverted_prefix_table.contains_key(&(curr_prefix, curr_prefix_length)) {
             characters.push(
@@ -97,13 +97,13 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
                     .unwrap()
                     .clone(),
             );
-            curr_prefix = 0u8;
+            curr_prefix = 0;
             curr_prefix_length = 0u8;
         }
     }
 
     for _ in 0..bytes_to_read_in_last_byte {
-        curr_prefix = (curr_prefix << 1) | (br.next().unwrap() & 1);
+        curr_prefix = (curr_prefix << 1) | ((br.next().unwrap() as u32) & 1);
         curr_prefix_length += 1;
         if inverted_prefix_table.contains_key(&(curr_prefix, curr_prefix_length)) {
             characters.push(
@@ -112,7 +112,7 @@ pub fn decode_data(data: &Vec<u8>, prefix_table: HashMap<char, (u8, u8)>) -> Vec
                     .unwrap()
                     .clone(),
             );
-            curr_prefix = 0u8;
+            curr_prefix = 0;
             curr_prefix_length = 0u8;
         }
     }

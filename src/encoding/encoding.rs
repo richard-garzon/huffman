@@ -4,8 +4,8 @@ use std::io::{BufReader, Read};
 
 pub fn get_prefixes(
     node: &Option<Box<HuffNode>>,
-    state: u8,
-    prefix: &mut HashMap<char, (u8, u8)>,
+    state: u32,
+    prefix: &mut HashMap<char, (u32, u8)>,
     meaningful_bits: u8,
 ) {
     if node.is_none() {
@@ -34,9 +34,9 @@ pub fn get_prefixes(
 /// it takes char as a key. the tuple values are (prefix, number of meaningful bits)
 /// the meaningful bits piece is used so we know how many to write while encoding
 /// so we can pack bits tight
-pub fn generate_prefix_table(root: Option<Box<HuffNode>>) -> HashMap<char, (u8, u8)> {
+pub fn generate_prefix_table(root: Option<Box<HuffNode>>) -> HashMap<char, (u32, u8)> {
     let mut prefix_table = HashMap::new();
-    let state: u8 = 0;
+    let state: u32 = 0;
 
     // special case: there is one distinct char in the input, so there is only one meaningful bit.
     // as-is, it would get assigned a 0 for meaningful_bits, so we handle that here
@@ -84,7 +84,7 @@ pub fn get_tree_header_with_size(node: &Option<Box<HuffNode>>) -> (u32, Vec<u8>)
 }
 
 fn get_encoded_data_impl(
-    prefix_table: &HashMap<char, (u8, u8)>,
+    prefix_table: &HashMap<char, (u32, u8)>,
     bw: &mut BitWriter,
     incomplete: &mut Vec<u8>,
     chunk: &[u8],
@@ -112,7 +112,7 @@ fn get_encoded_data_impl(
     incomplete.extend_from_slice(curr_incomplete);
 }
 
-pub fn get_encoded_data<R: Read>(file: R, prefix_table: HashMap<char, (u8, u8)>) -> Vec<u8> {
+pub fn get_encoded_data<R: Read>(file: R, prefix_table: HashMap<char, (u32, u8)>) -> Vec<u8> {
     let mut bw = BitWriter::new();
     let mut incomplete: Vec<u8> = Vec::new();
 
