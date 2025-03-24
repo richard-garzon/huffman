@@ -32,20 +32,12 @@ pub fn decompress_data(file: &mut File, output_filename: String) -> io::Result<(
     file.read_exact(&mut header_buf).unwrap();
     let tree = decode_tree_header_with_size(&header_buf);
     let prefix_table = generate_prefix_table(tree);
-    println!("header: {:?}", prefix_table);
 
-    // 3. get data header
-    let mut data_size_buf = [0u8; 4];
-    file.read_exact(&mut data_size_buf).unwrap();
-    let data_size = u32::from_be_bytes(data_size_buf);
-    println!("data size: {}", data_size);
-
-    // 4. decode data and write to a file
-    let mut data_buf = vec![0u8; data_size as usize];
-    file.read_exact(&mut data_buf).unwrap();
+    // 3. decode data and write to a file
+    let mut data_buf: Vec<u8> = Vec::new();
+    file.read_to_end(&mut data_buf).unwrap();
     let data = decode_data(&data_buf, prefix_table);
     let data_str: String = data.iter().collect();
-    println!("string output: {:?}", data_str);
     output_file.write_all(data_str.as_bytes()).unwrap();
 
     Ok(())
