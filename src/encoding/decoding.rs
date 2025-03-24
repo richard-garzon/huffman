@@ -297,8 +297,17 @@ Com";
 
         let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
-        let rez = decode_data(&encoded_data, decoded_prefix_table);
+        let rez = decode_data(&encoded_data, decoded_prefix_table.clone());
 
+        // for byte in encoded_data {
+        //     println!("{:08b}", byte);
+        // }
+
+        // for (key, value) in decoded_prefix_table.clone().into_iter() {
+        //     println!("key: {} -> ({:08b}, {})", key, value.0, value.1);
+        // }
+
+        assert_eq!(prefix_table.clone(), decoded_prefix_table.clone());
         assert_eq!(rez, test_input.chars().collect::<Vec<char>>());
     }
 
@@ -319,8 +328,9 @@ Com";
 
         let encoded_data = get_encoded_data(test_file, prefix_table.clone());
 
-        let rez = decode_data(&encoded_data, decoded_prefix_table);
+        let rez = decode_data(&encoded_data, decoded_prefix_table.clone());
 
+        assert_eq!(prefix_table.clone(), decoded_prefix_table.clone());
         assert_eq!(rez, test_input.chars().collect::<Vec<char>>());
     }
 }
